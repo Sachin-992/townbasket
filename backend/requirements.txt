@@ -1,0 +1,21 @@
+# Django and REST Framework
+Django>=5.0,<6.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+django-extensions>=3.2.3
+django-jazzmin>=3.0.0
+
+# Database
+psycopg2-binary>=2.9.9
+dj-database-url>=2.1.0
+
+# Authentication
+PyJWT>=2.8.0
+cryptography>=41.0.0
+
+# Production
+whitenoise>=6.6.0
+gunicorn>=21.2.0
+
+# Development
+python-dotenv>=1.0.0

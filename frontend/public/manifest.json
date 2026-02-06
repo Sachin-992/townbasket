@@ -1,0 +1,24 @@
+{
+    "name": "TownBasket",
+    "short_name": "TownBasket",
+    "description": "Rural E-commerce Platform - Shop local, delivered to your door",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#10B981",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "shopping",
+        "food",
+        "lifestyle"
+    ],
+    "lang": "en-IN"
+}

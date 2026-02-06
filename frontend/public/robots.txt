@@ -1,0 +1,34 @@
+# TownBasket Robots.txt
+# Production-safe crawler configuration
+
+User-agent: *
+Allow: /
+
+# Block access to API endpoints (handled by backend)
+Disallow: /api/
+
+# Block authentication pages from indexing
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
+Disallow: /select-role
+
+# Block user-specific pages
+Disallow: /customer/cart
+Disallow: /customer/checkout
+Disallow: /customer/order-success
+Disallow: /customer/orders
+Disallow: /customer/profile
+Disallow: /customer/addresses
+Disallow: /customer/notifications
+
+# Block admin and seller dashboards
+Disallow: /admin
+Disallow: /seller
+Disallow: /delivery
+
+# Sitemap location
+Sitemap: https://townbasket.com/sitemap.xml
+
+# Crawl-delay (optional, helps prevent server overload)
+Crawl-delay: 1

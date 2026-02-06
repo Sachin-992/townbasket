@@ -5,6 +5,7 @@ from orders.models import Order
 from django.utils import timezone
 from .serializers import CategorySerializer, ShopSerializer, ShopCreateSerializer
 from townbasket_backend.middleware import require_auth, require_role, optional_auth
+from rest_framework import status
 
 
 @api_view(['GET'])
@@ -36,11 +37,14 @@ def shops_list_create(request):
     
     elif request.method == 'POST':
         # Require authentication for creating shops
-        if not hasattr(request, 'supabase_user') or not request.supabase_user:
+        
+        user = getattr(request, 'supabase_user', None)
+        
+        if not user:
             return Response(
                 {'error': 'Authentication required'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+                status=status.HTTP_401_UNAUTHORIZED)
+
         
         serializer = ShopCreateSerializer(data=request.data)
         
@@ -108,7 +112,9 @@ def shop_detail(request, shop_id):
 
 
 @api_view(['GET'])
+@require_auth
 def my_shop(request):
+
     """
     Get the shop for the current seller.
     Requires authentication.

@@ -3,10 +3,18 @@ URL configuration for townbasket_backend project.
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from shops import views
+
+
+def health_check(request):
+    """Health check endpoint for Railway/load balancers"""
+    return JsonResponse({'status': 'healthy', 'service': 'townbasket-api'})
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/health/', health_check, name='health_check'),
     path('api/users/', include('users.urls')),
     path('api/shops/', include('shops.urls')),
     path('api/products/', include('products.urls')),

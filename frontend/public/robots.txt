@@ -28,7 +28,7 @@ Disallow: /seller
 Disallow: /delivery
 
 # Sitemap location
-Sitemap: https://townbasket.com/sitemap.xml
+Sitemap: https://townbasket.vercel.app/sitemap.xml
 
 # Crawl-delay (optional, helps prevent server overload)
 Crawl-delay: 1

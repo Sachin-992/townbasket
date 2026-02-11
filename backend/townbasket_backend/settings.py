@@ -162,6 +162,9 @@ elif CORS_ALLOWED_ORIGINS_STR:
 else:
     CORS_ALLOWED_ORIGINS = []
 
+# CSRF Settings - Required for new domain to make POST requests
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
 # SECURITY: Never allow all origins in production.
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True

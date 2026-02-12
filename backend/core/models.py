@@ -1,4 +1,5 @@
 from django.db import models
+from .audit import AuditLog  # noqa: F401 — exposed for Django model discovery
 
 class TownSettings(models.Model):
     """
@@ -26,10 +27,10 @@ class TownSettings(models.Model):
         return "Global Town Settings"
 
     def save(self, *args, **kwargs):
-        # Ensure only one instance exists
+        # Ensure only one instance exists (singleton pattern)
         if not self.pk and TownSettings.objects.exists():
-            return TownSettings.objects.first()
-        return super(TownSettings, self).save(*args, **kwargs)
+            self.pk = TownSettings.objects.first().pk
+        super(TownSettings, self).save(*args, **kwargs)
 
     @classmethod
     def load(cls):

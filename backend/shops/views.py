@@ -3,8 +3,14 @@ from rest_framework.response import Response
 from .models import Category, Shop
 from orders.models import Order
 from django.utils import timezone
+from django.db import transaction
 from .serializers import CategorySerializer, ShopSerializer, ShopCreateSerializer
 from townbasket_backend.middleware import require_auth, require_role, optional_auth
+from rest_framework import status
+from core.admin_views import log_admin_action
+import logging
+
+logger = logging.getLogger('townbasket_backend')
 
 
 @api_view(['GET'])
@@ -24,46 +30,68 @@ def shops_list_create(request):
     POST: Create a new shop (requires auth)
     """
     if request.method == 'GET':
-        supabase_uid = request.query_params.get('owner')
+        owner_filter = request.query_params.get('owner')
         
-        if supabase_uid:
-            shops = Shop.objects.filter(owner_supabase_uid=supabase_uid)
+        if owner_filter:
+            # SECURITY: Only allow fetching own shops via JWT identity
+            if not hasattr(request, 'supabase_user') or not request.supabase_user:
+                return Response(
+                    {'error': 'Authentication required to filter by owner'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            jwt_uid = request.supabase_user.get('user_id')
+            if owner_filter != jwt_uid:
+                return Response(
+                    {'error': 'Cannot view other users\' shops'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            shops = Shop.objects.filter(
+                owner_supabase_uid=jwt_uid
+            ).select_related('category')
         else:
-            shops = Shop.objects.filter(status='approved', is_active=True)
+            shops = Shop.objects.filter(
+                status='approved', is_active=True
+            ).select_related('category')
         
         serializer = ShopSerializer(shops, many=True)
         return Response(serializer.data)
     
     elif request.method == 'POST':
         # Require authentication for creating shops
-        if not hasattr(request, 'supabase_user') or not request.supabase_user:
+        user = getattr(request, 'supabase_user', None)
+        
+        if not user:
             return Response(
                 {'error': 'Authentication required'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        
+                status=status.HTTP_401_UNAUTHORIZED)
+
         serializer = ShopCreateSerializer(data=request.data)
         
         if serializer.is_valid():
-            # Use authenticated user's ID
+            # SECURITY: Force owner_supabase_uid from JWT
+            jwt_uid = request.supabase_user.get('user_id')
             owner_uid = serializer.validated_data.get('owner_supabase_uid')
             
-            # Verify the owner_uid matches authenticated user
-            if owner_uid != request.supabase_user.get('user_id'):
+            if owner_uid != jwt_uid:
                 return Response(
                     {'error': 'Cannot create shop for another user'},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
-            existing_shop = Shop.objects.filter(owner_supabase_uid=owner_uid).first()
+            with transaction.atomic():
+                existing_shop = Shop.objects.filter(
+                    owner_supabase_uid=jwt_uid
+                ).select_for_update().first()
+                
+                if existing_shop:
+                    return Response(
+                        {'error': 'You already have a registered shop'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                shop = serializer.save()
+                logger.info(f'Shop created: {shop.name} by {jwt_uid}')
             
-            if existing_shop:
-                return Response(
-                    {'error': 'You already have a registered shop'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            shop = serializer.save()
             return Response(ShopSerializer(shop).data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -108,7 +136,9 @@ def shop_detail(request, shop_id):
 
 
 @api_view(['GET'])
+@require_auth
 def my_shop(request):
+
     """
     Get the shop for the current seller.
     Requires authentication.
@@ -133,7 +163,7 @@ def my_shop(request):
     user_id = request.supabase_user.get('user_id')
     
     try:
-        shop = Shop.objects.get(owner_supabase_uid=user_id)
+        shop = Shop.objects.select_related('category').get(owner_supabase_uid=user_id)
         serializer = ShopSerializer(shop)
         return Response(serializer.data)
     except Shop.DoesNotExist:
@@ -253,6 +283,7 @@ def approve_shop(request, shop_id):
     
     shop.status = 'approved'
     shop.save()
+    log_admin_action(request, 'shop_approve', 'shop', shop.id, {'shop_name': shop.name})
     
     return Response({'message': 'Shop approved', 'shop': ShopSerializer(shop).data})
 
@@ -284,6 +315,7 @@ def reject_shop(request, shop_id):
     
     shop.status = 'rejected'
     shop.save()
+    log_admin_action(request, 'shop_reject', 'shop', shop.id, {'shop_name': shop.name})
     
     return Response({'message': 'Shop rejected', 'shop': ShopSerializer(shop).data})
 
@@ -315,6 +347,7 @@ def toggle_shop_active(request, shop_id):
     
     shop.is_active = not shop.is_active
     shop.save()
+    log_admin_action(request, 'shop_toggle', 'shop', shop.id, {'shop_name': shop.name, 'is_active': shop.is_active})
     
     return Response({
         'message': 'Shop activated' if shop.is_active else 'Shop disabled',

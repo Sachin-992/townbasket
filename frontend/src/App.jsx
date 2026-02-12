@@ -1,44 +1,65 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { ToastProvider } from './context/ToastContext'
+import { ConfirmProvider } from './context/ConfirmContext'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
+import PageLoader from './components/ui/PageLoader'
+import DocumentTitle from './components/DocumentTitle'
+
+// ────────────────────────────────────────────
+// Eagerly loaded (needed on first paint)
+// ────────────────────────────────────────────
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
-import RoleSelectionPage from './pages/RoleSelectionPage'
-import SellerDashboard from './pages/SellerDashboard'
-import DeliveryDashboard from './pages/DeliveryDashboard'
-import ResetPasswordPage from './pages/ResetPasswordPage'
-import NotFoundPage from './pages/NotFoundPage'
 
-// Admin Components
-import AdminLayout from './components/admin/AdminLayout'
-import AdminHome, {
-  AdminSellers,
-  AdminOrders,
-  AdminDelivery,
-  AdminComplaints,
-  AdminCategories,
-  AdminSettings
-} from './pages/admin/AdminPages'
+// ────────────────────────────────────────────
+// Lazy loaded — separate chunks per role
+// ────────────────────────────────────────────
+
+// Auth
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const RoleSelectionPage = lazy(() => import('./pages/RoleSelectionPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
+
+// Seller
+const SellerDashboard = lazy(() => import('./pages/SellerDashboard'))
+
+// Delivery
+const DeliveryDashboard = lazy(() => import('./pages/DeliveryDashboard'))
+
+// Admin — modular control center
+const AdminLayout = lazy(() => import('./admin/layout/AdminLayout'))
+const AdminOverview = lazy(() => import('./admin/pages/OverviewPage'))
+const AdminSellers = lazy(() => import('./admin/pages/SellersPage'))
+const AdminOrders = lazy(() => import('./admin/pages/OrdersPage'))
+const AdminDelivery = lazy(() => import('./admin/pages/DeliveryPage'))
+const AdminComplaints = lazy(() => import('./admin/pages/ComplaintsPage'))
+const AdminCategories = lazy(() => import('./admin/pages/CategoriesPage'))
+const AdminSettings = lazy(() => import('./admin/pages/SettingsPage'))
+const AdminAuditLog = lazy(() => import('./admin/pages/AuditLogPage'))
 
 // Customer Pages
-import HomePage from './pages/customer/HomePage'
-import ShopsListPage from './pages/customer/ShopsListPage'
-import ShopDetailPage from './pages/customer/ShopDetailPage'
-import CartPage from './pages/customer/CartPage'
-import CheckoutPage from './pages/customer/CheckoutPage'
-import OrderSuccessPage from './pages/customer/OrderSuccessPage'
-import OrdersPage from './pages/customer/OrdersPage'
-import ProfilePage from './pages/customer/ProfilePage'
-import SavedAddressesPage from './pages/customer/SavedAddressesPage'
-import OffersPage from './pages/customer/OffersPage'
-import NotificationsPage from './pages/customer/NotificationsPage'
-import HelpSupportPage from './pages/customer/HelpSupportPage'
-import AboutPage from './pages/customer/AboutPage'
-import TermsPage from './pages/customer/TermsPage'
-import PrivacyPolicyPage from './pages/customer/PrivacyPolicyPage'
-import ContactUsPage from './pages/customer/ContactUsPage'
+const HomePage = lazy(() => import('./pages/customer/HomePage'))
+const ShopsListPage = lazy(() => import('./pages/customer/ShopsListPage'))
+const ShopDetailPage = lazy(() => import('./pages/customer/ShopDetailPage'))
+const CartPage = lazy(() => import('./pages/customer/CartPage'))
+const CheckoutPage = lazy(() => import('./pages/customer/CheckoutPage'))
+const OrderSuccessPage = lazy(() => import('./pages/customer/OrderSuccessPage'))
+const OrdersPage = lazy(() => import('./pages/customer/OrdersPage'))
+const ProfilePage = lazy(() => import('./pages/customer/ProfilePage'))
+const SavedAddressesPage = lazy(() => import('./pages/customer/SavedAddressesPage'))
+const OffersPage = lazy(() => import('./pages/customer/OffersPage'))
+const NotificationsPage = lazy(() => import('./pages/customer/NotificationsPage'))
+const HelpSupportPage = lazy(() => import('./pages/customer/HelpSupportPage'))
+const AboutPage = lazy(() => import('./pages/customer/AboutPage'))
+const TermsPage = lazy(() => import('./pages/customer/TermsPage'))
+const PrivacyPolicyPage = lazy(() => import('./pages/customer/PrivacyPolicyPage'))
+const ContactUsPage = lazy(() => import('./pages/customer/ContactUsPage'))
+
+
 
 function App() {
   return (
@@ -46,197 +67,92 @@ function App() {
       <ErrorBoundary>
         <AuthProvider>
           <CartProvider>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <ToastProvider>
+              <ConfirmProvider>
+                <DocumentTitle />
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-              {/* Role Selection (after first login) */}
-              <Route
-                path="/select-role"
-                element={
-                  <ProtectedRoute>
-                    <RoleSelectionPage />
-                  </ProtectedRoute>
-                }
-              />
+                    {/* Role Selection */}
+                    <Route
+                      path="/select-role"
+                      element={
+                        <ProtectedRoute>
+                          <RoleSelectionPage />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              {/* Customer Routes */}
-              <Route
-                path="/customer"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <HomePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/shops"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <ShopsListPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/shop/:shopId"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <ShopDetailPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/cart"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <CartPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/checkout"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <CheckoutPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/order-success"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <OrderSuccessPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/orders"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <OrdersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/profile"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/addresses"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <SavedAddressesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/offers"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <OffersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/notifications"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <NotificationsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/help"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <HelpSupportPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/about"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <AboutPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/terms"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <TermsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/privacy"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <PrivacyPolicyPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/customer/contact"
-                element={
-                  <ProtectedRoute allowedRoles={['customer']}>
-                    <ContactUsPage />
-                  </ProtectedRoute>
-                }
-              />
+                    {/* Customer Routes */}
+                    <Route path="/customer" element={<ProtectedRoute allowedRoles={['customer']}><HomePage /></ProtectedRoute>} />
+                    <Route path="/customer/shops" element={<ProtectedRoute allowedRoles={['customer']}><ShopsListPage /></ProtectedRoute>} />
+                    <Route path="/customer/shop/:shopId" element={<ProtectedRoute allowedRoles={['customer']}><ShopDetailPage /></ProtectedRoute>} />
+                    <Route path="/customer/cart" element={<ProtectedRoute allowedRoles={['customer']}><CartPage /></ProtectedRoute>} />
+                    <Route path="/customer/checkout" element={<ProtectedRoute allowedRoles={['customer']}><CheckoutPage /></ProtectedRoute>} />
+                    <Route path="/customer/order-success" element={<ProtectedRoute allowedRoles={['customer']}><OrderSuccessPage /></ProtectedRoute>} />
+                    <Route path="/customer/orders" element={<ProtectedRoute allowedRoles={['customer']}><OrdersPage /></ProtectedRoute>} />
+                    <Route path="/customer/profile" element={<ProtectedRoute allowedRoles={['customer']}><ProfilePage /></ProtectedRoute>} />
+                    <Route path="/customer/addresses" element={<ProtectedRoute allowedRoles={['customer']}><SavedAddressesPage /></ProtectedRoute>} />
+                    <Route path="/customer/offers" element={<ProtectedRoute allowedRoles={['customer']}><OffersPage /></ProtectedRoute>} />
+                    <Route path="/customer/notifications" element={<ProtectedRoute allowedRoles={['customer']}><NotificationsPage /></ProtectedRoute>} />
+                    <Route path="/customer/help" element={<ProtectedRoute allowedRoles={['customer']}><HelpSupportPage /></ProtectedRoute>} />
+                    <Route path="/customer/about" element={<ProtectedRoute allowedRoles={['customer']}><AboutPage /></ProtectedRoute>} />
+                    <Route path="/customer/terms" element={<ProtectedRoute allowedRoles={['customer']}><TermsPage /></ProtectedRoute>} />
+                    <Route path="/customer/privacy" element={<ProtectedRoute allowedRoles={['customer']}><PrivacyPolicyPage /></ProtectedRoute>} />
+                    <Route path="/customer/contact" element={<ProtectedRoute allowedRoles={['customer']}><ContactUsPage /></ProtectedRoute>} />
 
-              {/* Seller Routes */}
-              <Route
-                path="/seller/*"
-                element={
-                  <ProtectedRoute allowedRoles={['seller']}>
-                    <SellerDashboard />
-                  </ProtectedRoute>
-                }
-              />
+                    {/* Seller Routes */}
+                    <Route
+                      path="/seller/*"
+                      element={
+                        <ProtectedRoute allowedRoles={['seller']}>
+                          <SellerDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              {/* Delivery Routes */}
-              <Route
-                path="/delivery/*"
-                element={
-                  <ProtectedRoute allowedRoles={['delivery']}>
-                    <DeliveryDashboard />
-                  </ProtectedRoute>
-                }
-              />
+                    {/* Delivery Routes */}
+                    <Route
+                      path="/delivery/*"
+                      element={
+                        <ProtectedRoute allowedRoles={['delivery']}>
+                          <DeliveryDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
 
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<AdminHome />} />
-                <Route path="sellers" element={<AdminSellers />} />
-                <Route path="orders" element={<AdminOrders />} />
-                <Route path="delivery" element={<AdminDelivery />} />
-                <Route path="complaints" element={<AdminComplaints />} />
-                <Route path="categories" element={<AdminCategories />} />
-                <Route path="settings" element={<AdminSettings />} />
-              </Route>
+                    {/* Admin Routes */}
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                          <AdminLayout />
+                        </ProtectedRoute>
+                      }
+                    >
+                      <Route index element={<AdminOverview />} />
+                      <Route path="sellers" element={<AdminSellers />} />
+                      <Route path="orders" element={<AdminOrders />} />
+                      <Route path="delivery" element={<AdminDelivery />} />
+                      <Route path="complaints" element={<AdminComplaints />} />
+                      <Route path="categories" element={<AdminCategories />} />
+                      <Route path="audit-log" element={<AdminAuditLog />} />
+                      <Route path="settings" element={<AdminSettings />} />
+                    </Route>
 
-              {/* Default redirect */}
-              {/* Default redirect */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
+                    {/* Default redirect */}
+                    <Route path="/" element={<Navigate to="/login" replace />} />
 
-              {/* 404 Not Found - Must be last */}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+                    {/* 404 */}
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </Suspense>
+              </ConfirmProvider>
+            </ToastProvider>
           </CartProvider>
         </AuthProvider>
       </ErrorBoundary>

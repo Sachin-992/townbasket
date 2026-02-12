@@ -50,6 +50,47 @@
   --safe-area-bottom: env(safe-area-inset-bottom);
   --safe-area-left: env(safe-area-inset-left);
   --safe-area-right: env(safe-area-inset-right);
+
+  /* Admin-specific tokens */
+  --admin-sidebar-width: 260px;
+  --admin-sidebar-collapsed: 72px;
+  --admin-topbar-height: 56px;
+  --admin-accent: #6366F1;
+  --admin-accent-light: #818CF8;
+  --admin-glass-bg: rgba(255, 255, 255, 0.7);
+  --admin-glass-border: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Dark Mode ─────────────────────────────────── */
+html.dark {
+  --color-bg: #0F172A;
+  --color-card: #1E293B;
+  --color-text: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-border: #334155;
+
+  --color-primary: #34D399;
+  --color-primary-dark: #10B981;
+  --color-primary-light: #064E3B;
+
+  --color-accent: #FB923C;
+  --color-accent-dark: #F97316;
+
+  --color-success: #4ADE80;
+  --color-warning: #FACC15;
+  --color-error: #F87171;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4);
+  --shadow-card: 0 2px 8px rgb(0 0 0 / 0.25);
+
+  --admin-accent: #818CF8;
+  --admin-accent-light: #A5B4FC;
+  --admin-glass-bg: rgba(30, 41, 59, 0.8);
+  --admin-glass-border: rgba(51, 65, 85, 0.5);
+
+  color-scheme: dark;
 }
 
 /* Base Styles */

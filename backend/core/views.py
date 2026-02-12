@@ -3,28 +3,26 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import TownSettings
 from .serializers import TownSettingsSerializer
+from townbasket_backend.middleware import require_auth, require_role
+from .admin_views import log_admin_action
 
-@api_view(['GET', 'PATCH'])
-def town_settings(request):
-    """
-    Get or update global town settings.
-    Admin only for updates.
-    """
+@api_view(['GET'])
+def town_settings_get(request):
+    """Get global town settings. Public endpoint."""
     settings = TownSettings.load()
-    
-    if request.method == 'GET':
-        return Response(TownSettingsSerializer(settings).data)
-        
-    elif request.method == 'PATCH':
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
-             return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
-             
-        # Ideally check for admin role here as well using request.supabase_user 
-        # (Assuming middleware attaches it)
+    return Response(TownSettingsSerializer(settings).data)
 
-        serializer = TownSettingsSerializer(settings, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['PATCH'])
+@require_auth
+@require_role('admin')
+def town_settings_update(request):
+    """Update global town settings. Admin only."""
+    settings = TownSettings.load()
+    serializer = TownSettingsSerializer(settings, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        log_admin_action(request, 'settings_update', 'settings', settings.id, request.data)
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+

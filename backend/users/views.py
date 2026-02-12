@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import User
 from .serializers import UserSerializer, UserPublicSerializer, RoleUpdateSerializer
 from townbasket_backend.middleware import require_auth, require_role
+from core.admin_views import log_admin_action
 
 
 @api_view(['POST'])
@@ -169,6 +170,7 @@ def toggle_user_active(request, user_id):
     
     user.is_active = not user.is_active
     user.save()
+    log_admin_action(request, 'user_toggle', 'user', user.id, {'user_name': user.name, 'is_active': user.is_active})
     
     return Response({
         'message': 'User activated' if user.is_active else 'User deactivated',

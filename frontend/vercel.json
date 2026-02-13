@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/api/:path*",
-            "destination": "https://your-backend-url.railway.app/api/:path*"
+            "destination": "https://sachin0897.pythonanywhere.com/api/:path*"
         },
         {
             "source": "/((?!api|_next|static|robots.txt|sitemap.xml|manifest.json|favicon.svg).*)",

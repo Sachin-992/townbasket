@@ -69,6 +69,9 @@ import {
     Shield,
     Wifi,
     X,
+    Power,
+    Ban,
+    UserCog,
 } from 'lucide-react'
 
 /** Lookup map: PascalCase icon name → Lucide component */
@@ -137,6 +140,9 @@ const ICON_MAP = {
     Shield,
     Wifi,
     X,
+    Power,
+    Ban,
+    UserCog,
 }
 
 /**

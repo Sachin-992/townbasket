@@ -32,9 +32,25 @@ export default function OrderList({ user }) {
         }
     }
 
+    // Map new status → which tab to navigate to after update
+    const STATUS_TO_TAB = {
+        confirmed: 'confirmed',
+        preparing: 'preparing',
+        ready: 'ready',
+        out_for_delivery: 'dispatched',
+        delivered: 'all',
+        cancelled: 'all',
+    }
+
     const handleStatusUpdate = async (orderId, newStatus) => {
         await ordersApi.updateOrderStatus(orderId, newStatus)
-        loadOrders()
+        // Auto-navigate to the tab matching the new status
+        const nextTab = STATUS_TO_TAB[newStatus]
+        if (nextTab) {
+            setActiveTab(nextTab)
+        } else {
+            loadOrders()
+        }
     }
 
     const tabs = [
@@ -78,6 +94,7 @@ export default function OrderList({ user }) {
             const reason = window.prompt("Why are you rejecting this order? (Simple reason for customer)")
             if (!reason) return
             await ordersApi.updateOrderStatus(orderId, newStatus, reason)
+            setActiveTab('all')
         } else if (newStatus === 'assign') {
             const order = orders.find(o => o.id === orderId)
             setSelectedOrder(order)

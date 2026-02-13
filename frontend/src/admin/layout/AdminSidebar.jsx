@@ -3,9 +3,9 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { ADMIN_NAV } from '../utils/permissions'
-import * as icons from 'lucide-react'
+import ICON_MAP, { getIcon } from '../utils/iconMap'
 
-const { Moon, Sun, LogOut, ChevronsLeft, ChevronsRight } = icons
+const { Moon, Sun, LogOut, ChevronsLeft, ChevronsRight } = ICON_MAP
 
 export default function AdminSidebar({ collapsed, onToggleCollapse }) {
     const { pathname } = useLocation()
@@ -43,7 +43,7 @@ export default function AdminSidebar({ collapsed, onToggleCollapse }) {
                 {/* Nav */}
                 <nav className="flex-1 py-3 px-3 space-y-1 overflow-y-auto">
                     {ADMIN_NAV.map(item => {
-                        const Icon = icons[item.icon] || icons.Circle
+                        const Icon = getIcon(item.icon)
                         const active = isActive(item.path, item.exact)
                         return (
                             <Link
@@ -73,6 +73,7 @@ export default function AdminSidebar({ collapsed, onToggleCollapse }) {
                     {/* Dark mode */}
                     <button
                         onClick={toggleDark}
+                        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors w-full"
                     >
                         {isDark ? <Sun size={18} /> : <Moon size={18} />}
@@ -82,6 +83,7 @@ export default function AdminSidebar({ collapsed, onToggleCollapse }) {
                     {/* Collapse toggle */}
                     <button
                         onClick={onToggleCollapse}
+                        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors w-full"
                     >
                         {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
@@ -91,6 +93,7 @@ export default function AdminSidebar({ collapsed, onToggleCollapse }) {
                     {/* Logout */}
                     <button
                         onClick={handleLogout}
+                        aria-label="Log out"
                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors w-full"
                     >
                         <LogOut size={18} />

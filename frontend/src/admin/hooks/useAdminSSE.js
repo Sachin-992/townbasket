@@ -63,7 +63,7 @@ export function useAdminSSE() {
                             break
                     }
                 } catch (parseErr) {
-                    console.warn('SSE parse error:', parseErr)
+                    // SSE parse error — silently ignored in production
                 }
             }
 

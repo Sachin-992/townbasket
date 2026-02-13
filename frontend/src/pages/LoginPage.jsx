@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 export default function LoginPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [resetEmail, setResetEmail] = useState('')
@@ -146,19 +147,21 @@ export default function LoginPage() {
 
                         <form onSubmit={handleLogin} className="space-y-6 relative z-10">
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700 ml-1">Email Address</label>
+                                <label htmlFor="login-email" className="text-sm font-bold text-gray-700 ml-1">Email Address</label>
                                 <input
+                                    id="login-email"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="you@example.com"
+                                    autoComplete="email"
                                     className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium text-gray-900 shadow-inner"
                                 />
                             </div>
 
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center px-1">
-                                    <label className="text-sm font-bold text-gray-700">Password</label>
+                                    <label htmlFor="login-password" className="text-sm font-bold text-gray-700">Password</label>
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -171,13 +174,37 @@ export default function LoginPage() {
                                         Forgot?
                                     </button>
                                 </div>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium text-gray-900 shadow-inner"
-                                />
+                                <div className="relative">
+                                    <input
+                                        id="login-password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        autoComplete="current-password"
+                                        className="w-full px-5 py-4 pr-14 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium text-gray-900 shadow-inner"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                        tabIndex={-1}
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        {showPassword ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                                <line x1="1" y1="1" x2="23" y2="23" />
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             {error && (

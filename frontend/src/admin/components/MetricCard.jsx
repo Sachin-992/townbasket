@@ -1,6 +1,6 @@
 import { memo } from 'react'
+import { getIcon } from '../utils/iconMap'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import * as icons from 'lucide-react'
 import { MetricCardSkeleton } from './SkeletonLoader'
 
 const trendConfig = {
@@ -22,7 +22,7 @@ const trendConfig = {
 function MetricCard({ title, value, icon, trend = 'flat', trendValue, subtitle, loading }) {
     if (loading) return <MetricCardSkeleton />
 
-    const LucideIcon = icons[icon] || icons.Activity
+    const LucideIcon = getIcon(icon)
     const t = trendConfig[trend] || trendConfig.flat
 
     return (

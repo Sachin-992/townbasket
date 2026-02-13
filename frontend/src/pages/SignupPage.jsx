@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 
 export default function SignupPage() {
     const [name, setName] = useState('')
@@ -14,6 +15,7 @@ export default function SignupPage() {
 
     const { signUp, resendConfirmationEmail } = useAuth()
     const navigate = useNavigate()
+    const toast = useToast()
 
     const validateEmail = (email) => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -64,7 +66,7 @@ export default function SignupPage() {
             setError(resendError.message || 'Failed to resend email')
         } else {
             setError('')
-            alert('Confirmation email sent! Please check your inbox and spam folder.')
+            toast.success('Confirmation email sent! Please check your inbox and spam folder.')
         }
     }
 
@@ -226,45 +228,53 @@ export default function SignupPage() {
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 relative overflow-hidden group">
                         <form onSubmit={handleSignup} className="space-y-5 relative z-10">
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700 ml-1">Full Name</label>
+                                <label htmlFor="signup-name" className="text-sm font-bold text-gray-700 ml-1">Full Name</label>
                                 <input
+                                    id="signup-name"
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="Enter your full name"
+                                    autoComplete="name"
                                     className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium text-gray-900 shadow-inner"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700 ml-1">Email Address</label>
+                                <label htmlFor="signup-email" className="text-sm font-bold text-gray-700 ml-1">Email Address</label>
                                 <input
+                                    id="signup-email"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="you@example.com"
+                                    autoComplete="email"
                                     className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium text-gray-900 shadow-inner"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 ml-1">Password</label>
+                                    <label htmlFor="signup-password" className="text-sm font-bold text-gray-700 ml-1">Password</label>
                                     <input
+                                        id="signup-password"
                                         type="password"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Min 6 chars"
+                                        autoComplete="new-password"
                                         className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium text-gray-900 shadow-inner"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700 ml-1">Confirm</label>
+                                    <label htmlFor="signup-confirm" className="text-sm font-bold text-gray-700 ml-1">Confirm</label>
                                     <input
+                                        id="signup-confirm"
                                         type="password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         placeholder="Verify"
+                                        autoComplete="new-password"
                                         className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-medium text-gray-900 shadow-inner"
                                     />
                                 </div>

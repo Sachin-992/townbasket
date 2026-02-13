@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Command } from 'cmdk'
 import { ADMIN_NAV } from '../utils/permissions'
-import * as icons from 'lucide-react'
+import ICON_MAP, { getIcon } from '../utils/iconMap'
 
 export default function CommandPalette({ open, onClose }) {
     const [search, setSearch] = useState('')
@@ -33,7 +33,7 @@ export default function CommandPalette({ open, onClose }) {
                 <Command className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden" label="Command palette">
                     {/* Search input */}
                     <div className="flex items-center gap-3 px-4 border-b border-gray-100 dark:border-gray-800">
-                        <icons.Search size={18} className="text-gray-400 shrink-0" />
+                        <ICON_MAP.Search size={18} className="text-gray-400 shrink-0" />
                         <Command.Input
                             ref={inputRef}
                             value={search}
@@ -53,7 +53,7 @@ export default function CommandPalette({ open, onClose }) {
 
                         <Command.Group heading="Pages" className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-bold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-gray-400">
                             {ADMIN_NAV.map(item => {
-                                const Icon = icons[item.icon] || icons.Circle
+                                const Icon = getIcon(item.icon)
                                 return (
                                     <Command.Item
                                         key={item.path}
@@ -74,7 +74,7 @@ export default function CommandPalette({ open, onClose }) {
                                 onSelect={() => go('/admin/sellers')}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 cursor-pointer data-[selected=true]:bg-indigo-50 dark:data-[selected=true]:bg-indigo-900/30 data-[selected=true]:text-indigo-700 dark:data-[selected=true]:text-indigo-400"
                             >
-                                <icons.UserCheck size={16} />
+                                <ICON_MAP.UserCheck size={16} />
                                 <span>View Pending Sellers</span>
                             </Command.Item>
                             <Command.Item
@@ -82,7 +82,7 @@ export default function CommandPalette({ open, onClose }) {
                                 onSelect={() => go('/admin/orders')}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 cursor-pointer data-[selected=true]:bg-indigo-50 dark:data-[selected=true]:bg-indigo-900/30 data-[selected=true]:text-indigo-700 dark:data-[selected=true]:text-indigo-400"
                             >
-                                <icons.Package size={16} />
+                                <ICON_MAP.Package size={16} />
                                 <span>View All Orders</span>
                             </Command.Item>
                             <Command.Item
@@ -90,7 +90,7 @@ export default function CommandPalette({ open, onClose }) {
                                 onSelect={() => go('/admin/settings')}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 dark:text-gray-300 cursor-pointer data-[selected=true]:bg-indigo-50 dark:data-[selected=true]:bg-indigo-900/30 data-[selected=true]:text-indigo-700 dark:data-[selected=true]:text-indigo-400"
                             >
-                                <icons.Settings size={16} />
+                                <ICON_MAP.Settings size={16} />
                                 <span>Open Settings</span>
                             </Command.Item>
                         </Command.Group>

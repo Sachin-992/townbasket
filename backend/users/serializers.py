@@ -17,12 +17,17 @@ class UserPublicSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'phone',
+            'email',
             'role',
             'town',
+            'is_active',
             'is_online',
             'is_enrolled',
+            'created_at',
         ]
         read_only_fields = fields
+
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -84,8 +84,8 @@ export const adminOrdersApi = {
 
 // ── Users (admin) ────────────────────────────────
 export const adminUsersApi = {
-    getAll: () => adminFetch('/users/all/'),
-    getByRole: (role) => adminFetch(`/users/role/${role}/`),
+    getAll: () => adminFetch('/users/list/?page_size=500').then(r => r.results || r),
+    getByRole: (role) => adminFetch(`/users/list/?role=${role}&page_size=500`).then(r => r.results || r),
     toggleActive: (id) =>
         adminFetch(`/users/${id}/toggle-active/`, { method: 'PATCH' }),
 }

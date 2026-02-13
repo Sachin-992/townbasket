@@ -32,7 +32,7 @@ export default function UsersPage() {
 
     const columns = useMemo(() => [
         {
-            key: 'full_name', label: 'User', render: (v, row) => (
+            key: 'name', label: 'User', render: (v, row) => (
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
                         {(v || row.phone || '?')[0].toUpperCase()}
@@ -62,7 +62,7 @@ export default function UsersPage() {
             )
         },
         {
-            key: 'date_joined', label: 'Joined', render: (v) => (
+            key: 'created_at', label: 'Joined', render: (v) => (
                 <span className="text-xs text-gray-500">{v ? formatDateTime(v) : '—'}</span>
             )
         },
@@ -96,8 +96,8 @@ export default function UsersPage() {
                             key={role}
                             onClick={() => setRoleFilter(roleFilter === role ? '' : role)}
                             className={`p-4 rounded-xl border text-left transition-all ${isActive
-                                    ? 'border-indigo-300 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 shadow-sm'
-                                    : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-sm'
+                                ? 'border-indigo-300 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 shadow-sm'
+                                : 'border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-sm'
                                 }`}
                         >
                             <div className="flex items-center justify-between mb-2">

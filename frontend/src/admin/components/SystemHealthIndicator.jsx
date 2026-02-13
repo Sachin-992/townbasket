@@ -1,5 +1,4 @@
 import { memo } from 'react'
-import { Activity, Database, Shield, Wifi } from 'lucide-react'
 import { useSystemHealth } from '../hooks/useAdminData'
 
 function SystemHealthIndicator({ compact = false }) {

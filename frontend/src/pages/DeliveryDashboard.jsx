@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { ordersApi, usersApi } from '../lib/api'
+import { useToast } from '../context/ToastContext'
 
 export default function DeliveryDashboard() {
     const { user, signOut } = useAuth()
+    const toast = useToast()
     const [profile, setProfile] = useState(null)
     const [loading, setLoading] = useState(true)
     const [activeDelivery, setActiveDelivery] = useState(null)
@@ -86,7 +88,7 @@ export default function DeliveryDashboard() {
             const updated = await usersApi.toggleOnlineStatus(user.id)
             setProfile(updated)
         } catch (err) {
-            alert('Failed to update status')
+            toast.error('Failed to update status')
         }
     }
 
@@ -96,7 +98,7 @@ export default function DeliveryDashboard() {
             await ordersApi.acceptDelivery(orderId, user.id)
             loadData(false)
         } catch (err) {
-            alert(err.message || 'Failed to accept order')
+            toast.error(err.message || 'Failed to accept order')
             setRefreshing(false)
         }
     }
@@ -107,7 +109,7 @@ export default function DeliveryDashboard() {
             await ordersApi.updateOrderStatus(orderId, newStatus)
             loadData(false)
         } catch (err) {
-            alert('Failed to update status')
+            toast.error('Failed to update status')
             setRefreshing(false)
         }
     }
@@ -122,7 +124,7 @@ export default function DeliveryDashboard() {
             })
             loadData(false)
         } catch (err) {
-            alert('Enrollment failed. Please try again.')
+            toast.error('Enrollment failed. Please try again.')
         } finally {
             setSubmittingEnroll(false)
         }
@@ -714,7 +716,7 @@ export default function DeliveryDashboard() {
                             <button
                                 onClick={() => {
                                     // TODO: Submit report to backend
-                                    alert(`Issue reported: ${reportData.type}\n${reportData.description}`)
+                                    toast.info(`Issue reported: ${reportData.type}`)
                                     setShowReportModal(false)
                                     setReportData({ type: '', description: '' })
                                 }}

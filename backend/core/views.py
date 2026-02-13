@@ -5,6 +5,7 @@ from .models import TownSettings
 from .serializers import TownSettingsSerializer
 from townbasket_backend.middleware import require_auth, require_role
 from .admin_views import log_admin_action
+from .rate_limit import rate_limit
 
 @api_view(['GET'])
 def town_settings_get(request):
@@ -15,6 +16,7 @@ def town_settings_get(request):
 @api_view(['PATCH'])
 @require_auth
 @require_role('admin')
+@rate_limit(max_requests=10, window_seconds=300, key_prefix='admin_settings')
 def town_settings_update(request):
     """Update global town settings. Admin only."""
     settings = TownSettings.load()

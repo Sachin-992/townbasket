@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 import { usersApi } from '../../lib/api'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 
 export default function OffersPage() {
     const { user } = useAuth()
+    const toast = useToast()
     const [stats, setStats] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -64,7 +66,7 @@ export default function OffersPage() {
 
     const copyCode = (code) => {
         navigator.clipboard.writeText(code)
-        alert(`Code "${code}" copied to clipboard!`)
+        toast.success(`Code "${code}" copied to clipboard!`)
     }
 
     if (loading) {

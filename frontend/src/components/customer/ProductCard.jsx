@@ -1,16 +1,24 @@
 import { useState } from 'react'
 import { useCart } from '../../context/CartContext'
+import { useConfirm } from '../../context/ConfirmContext'
 
 export default function ProductCard({ product, shop, viewMode = 'grid' }) {
-    const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart()
+    const { addToCart, switchShop, cartItems, updateQuantity, removeFromCart } = useCart()
+    const confirm = useConfirm()
     const [isAdding, setIsAdding] = useState(false)
 
     const cartItem = cartItems.find(item => item.product.id === product.id)
     const quantity = cartItem?.quantity || 0
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         setIsAdding(true)
-        addToCart(product, shop)
+        const result = addToCart(product, shop)
+        if (result?.needs_confirm) {
+            const yes = await confirm(
+                `Your cart has items from ${result.currentShop.name}. Clear cart and add from ${result.newShop.name}?`
+            )
+            if (yes) switchShop(product, shop)
+        }
         setTimeout(() => setIsAdding(false), 300)
     }
 

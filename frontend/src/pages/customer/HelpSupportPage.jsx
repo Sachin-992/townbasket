@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useToast } from '../../context/ToastContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 
 export default function HelpSupportPage() {
     const [expandedFaq, setExpandedFaq] = useState(null)
+    const toast = useToast()
 
     const faqs = [
         {
@@ -123,7 +125,7 @@ export default function HelpSupportPage() {
                         <p className="text-gray-500 text-sm mb-4">If you have any issues with your order or service, you can file a complaint and our team will assist you.</p>
                         <button
                             className="w-full bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-xl font-semibold transition-colors"
-                            onClick={() => alert('Complaint feature coming soon!')}
+                            onClick={() => toast.info('Complaint feature coming soon!')}
                         >
                             File a Complaint
                         </button>

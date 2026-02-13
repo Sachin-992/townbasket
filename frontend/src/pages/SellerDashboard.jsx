@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useConfirm } from '../context/ConfirmContext'
 import { shopsApi, ordersApi } from '../lib/api'
 import ShopOnboarding from '../components/seller/ShopOnboarding'
 import ProductList from '../components/seller/ProductList'
@@ -11,6 +12,7 @@ import ShopEditForm from '../components/seller/ShopEditForm'
 export default function SellerDashboard() {
     const { user, signOut } = useAuth()
     const navigate = useNavigate()
+    const confirm = useConfirm()
     const [shop, setShop] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -69,7 +71,7 @@ export default function SellerDashboard() {
 
     const playNotification = () => {
         if (audioRef.current) {
-            audioRef.current.play().catch(e => console.log("Audio play blocked", e))
+            audioRef.current.play().catch(() => { /* Audio autoplay blocked by browser */ })
             // Vibration for mobile
             if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200])
         }
@@ -205,14 +207,14 @@ export default function SellerDashboard() {
             ? "Are you sure you want to CLOSE your shop? Customers won't be able to order."
             : "Open shop now? You will start receiving orders."
 
-        if (window.confirm(confirmMsg)) {
+        if (await confirm(confirmMsg)) {
             const result = await shopsApi.toggleShopOpen(shop.id)
             setShop(prev => ({ ...prev, is_open: result.is_open }))
         }
     }
 
     const handleLogout = async () => {
-        if (window.confirm("Are you sure you want to log out?")) {
+        if (await confirm("Are you sure you want to log out?")) {
             await signOut()
             navigate('/login')
         }
@@ -348,6 +350,7 @@ export default function SellerDashboard() {
                                 onClick={handleLogout}
                                 className="w-11 h-11 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-95"
                                 title="Sign Out"
+                                aria-label="Sign Out"
                             >
                                 <span className="material-symbols-rounded">logout</span>
                             </button>

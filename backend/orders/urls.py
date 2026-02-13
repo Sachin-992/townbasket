@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import sse
 
 urlpatterns = [
     path('seller/', views.seller_orders, name='seller_orders'),
@@ -11,4 +12,10 @@ urlpatterns = [
     path('<int:order_id>/status/', views.update_order_status, name='update_order_status'),
     path('<int:order_id>/accept-delivery/', views.accept_delivery, name='accept_delivery'),
     path('delivery/stats/', views.delivery_stats, name='delivery_stats'),
+    path('seller/stats/', views.seller_stats, name='seller_stats'),
+    path('seller/sse/', sse.seller_order_sse, name='seller_order_sse'),
+    # Invoice endpoints
+    path('<int:order_id>/invoice/', views.download_invoice, name='download_invoice'),
+    path('<int:order_id>/invoice/resend/', views.resend_invoice_email, name='resend_invoice_email'),
 ]
+

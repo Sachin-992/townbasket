@@ -5,30 +5,40 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    // Target modern browsers for smaller bundles
     target: 'es2020',
-    // No source maps in production
     sourcemap: false,
-    // Warn if chunk exceeds 500KB
-    chunkSizeWarningLimit: 500,
-    // Optimal chunk splitting
+    chunkSizeWarningLimit: 300,
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/') || id.includes('node_modules/react-router')) {
-            return 'vendor-react';
+          if (id.includes('node_modules')) {
+            // React core
+            if (id.includes('/react-dom/') || id.includes('/react/') || id.includes('/react-router')) {
+              return 'vendor-react'
+            }
+            // Charting (recharts + d3)
+            if (id.includes('/recharts/') || id.includes('/d3-')) {
+              return 'vendor-charts'
+            }
+            // Data fetching
+            if (id.includes('/@tanstack/')) {
+              return 'vendor-query'
+            }
+            // Auth
+            if (id.includes('/@supabase/')) {
+              return 'vendor-supabase'
+            }
+            // UI libraries
+            if (id.includes('/cmdk/')) {
+              return 'vendor-ui'
+            }
           }
         },
       },
     },
   },
-  // Optimize dependency pre-bundling
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
   },
-  esbuild: {
-    // Strip console.log and debugger from production builds
-    drop: ['console', 'debugger'],
-  },
 })
-

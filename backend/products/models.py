@@ -58,6 +58,12 @@ class Product(models.Model):
     class Meta:
         db_table = 'products'
         ordering = ['-is_featured', '-created_at']
+        indexes = [
+            models.Index(fields=['shop', 'is_active']),
+            models.Index(fields=['shop', 'in_stock']),
+            models.Index(fields=['shop', 'category']),
+            models.Index(fields=['is_active', 'is_featured', '-created_at']),
+        ]
 
     def __str__(self):
         return f"{self.name} - {self.shop.name}"

@@ -251,9 +251,23 @@ def all_shops(request):
             status=status.HTTP_403_FORBIDDEN
         )
     
-    shops = Shop.objects.all()
-    serializer = ShopSerializer(shops, many=True)
-    return Response(serializer.data)
+    shops = Shop.objects.all().select_related('category')
+    
+    # Pagination
+    page = max(int(request.query_params.get('page', 1)), 1)
+    page_size = min(int(request.query_params.get('page_size', 20)), 100)
+    total = shops.count()
+    start = (page - 1) * page_size
+    page_shops = shops.order_by('-id')[start:start + page_size]
+    
+    serializer = ShopSerializer(page_shops, many=True)
+    return Response({
+        'results': serializer.data,
+        'count': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': (total + page_size - 1) // page_size,
+    })
 
 
 @api_view(['PATCH'])

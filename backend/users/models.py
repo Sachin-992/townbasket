@@ -34,6 +34,11 @@ class User(models.Model):
 
     class Meta:
         db_table = 'users'
+        indexes = [
+            models.Index(fields=['role'], name='idx_user_role'),
+            models.Index(fields=['role', 'created_at'], name='idx_user_role_created'),
+            models.Index(fields=['created_at'], name='idx_user_created_at'),
+        ]
 
     def __str__(self):
         return f"{self.phone or self.email} ({self.role})"

@@ -7,7 +7,16 @@ import StatusBadge from '../components/StatusBadge'
 import { useConfirm } from '../../context/ConfirmContext'
 import { useToast } from '../../context/ToastContext'
 import { formatDateTime } from '../utils/formatters'
-import { CheckCircle, XCircle, Power } from 'lucide-react'
+import ICON_MAP from '../utils/iconMap'
+
+const { CheckCircle, XCircle, Power, Store, Clock, Ban, ShieldCheck } = ICON_MAP
+
+const STAT_CARDS = [
+    { key: 'total', label: 'Total Shops', icon: Store, color: 'indigo' },
+    { key: 'active', label: 'Active', icon: ShieldCheck, color: 'emerald' },
+    { key: 'pending', label: 'Pending', icon: Clock, color: 'amber' },
+    { key: 'rejected', label: 'Rejected', icon: Ban, color: 'rose' },
+]
 
 export default function SellersPage() {
     const [tab, setTab] = useState('all')
@@ -17,6 +26,18 @@ export default function SellersPage() {
     const confirm = useConfirm()
     const toast = useToast()
 
+    // ── Computed stats ──────────────────────────
+    const stats = useMemo(() => {
+        const all = allShops || []
+        return {
+            total: all.length,
+            active: all.filter(s => s.status === 'approved' && s.is_active).length,
+            pending: (pendingShops || []).length,
+            rejected: all.filter(s => s.status === 'rejected').length,
+        }
+    }, [allShops, pendingShops])
+
+    // ── Actions ─────────────────────────────────
     const handleApprove = async (shop) => {
         const ok = await confirm('Approve Shop', `Approve "${shop.name}"?`, { confirmText: 'Approve', variant: 'primary' })
         if (!ok) return
@@ -47,6 +68,7 @@ export default function SellersPage() {
         } catch (e) { toast.error(e.message) }
     }
 
+    // ── Table columns ───────────────────────────
     const allColumns = useMemo(() => [
         { key: 'name', label: 'Shop Name' },
         { key: 'owner_name', label: 'Owner' },
@@ -92,9 +114,32 @@ export default function SellersPage() {
 
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-[1440px] mx-auto">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sellers</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage shop registrations and status</p>
+            {/* Header */}
+            <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+                    <Store size={22} className="text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sellers</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage shop registrations and status</p>
+                </div>
+            </div>
+
+            {/* Stat cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {STAT_CARDS.map(({ key, label, icon: Icon, color }) => (
+                    <div key={key} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                                {loadingAll ? '—' : stats[key]}
+                            </p>
+                        </div>
+                        <div className={`p-2 rounded-lg bg-${color}-50 dark:bg-${color}-900/30`}>
+                            <Icon size={18} className={`text-${color}-600 dark:text-${color}-400`} />
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Tabs */}
@@ -104,8 +149,8 @@ export default function SellersPage() {
                         key={t.key}
                         onClick={() => setTab(t.key)}
                         className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${tab === t.key
-                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
                     >
                         {t.label}

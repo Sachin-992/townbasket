@@ -1,10 +1,62 @@
-import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Search, Bell, Menu, Command } from 'lucide-react'
-import SystemHealthIndicator from '../components/SystemHealthIndicator'
+import { useState, useEffect } from 'react'
+import ICON_MAP from '../utils/iconMap'
+import AlertCenter from '../components/AlertCenter'
 import { ADMIN_NAV } from '../utils/permissions'
 
-export default function AdminTopbar({ onMenuClick, onOpenPalette }) {
+const { Search, Menu, Command } = ICON_MAP
+
+const HEALTH_COLORS = {
+    healthy: 'bg-emerald-500',
+    degraded: 'bg-amber-500',
+    unknown: 'bg-gray-400',
+    online: 'bg-emerald-500',
+    offline: 'bg-rose-500',
+}
+
+function HealthBadge({ health, connected }) {
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
+    const [online, setOnline] = useState(isOnline)
+
+    useEffect(() => {
+        const goOnline = () => setOnline(true)
+        const goOffline = () => setOnline(false)
+        window.addEventListener('online', goOnline)
+        window.addEventListener('offline', goOffline)
+        return () => {
+            window.removeEventListener('online', goOnline)
+            window.removeEventListener('offline', goOffline)
+        }
+    }, [])
+
+    // Priority: SSE health > SSE connected > browser online/offline
+    let status, label, color
+    if (connected && health?.status) {
+        status = health.status
+        label = status.charAt(0).toUpperCase() + status.slice(1)
+        color = HEALTH_COLORS[status] || HEALTH_COLORS.unknown
+    } else if (connected) {
+        label = 'Healthy'
+        color = HEALTH_COLORS.healthy
+    } else if (online) {
+        label = 'Online'
+        color = HEALTH_COLORS.online
+    } else {
+        label = 'Offline'
+        color = HEALTH_COLORS.offline
+    }
+
+    return (
+        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg" title={`Status: ${label}`}>
+            <span className={`w-2 h-2 rounded-full ${color} ${(connected || online) ? 'animate-pulse' : ''}`} />
+            <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {label}
+            </span>
+        </div>
+    )
+}
+
+export default function AdminTopbar({ onMenuClick, onOpenPalette, sse }) {
     const { pathname } = useLocation()
 
     // Build breadcrumb from current path
@@ -41,7 +93,7 @@ export default function AdminTopbar({ onMenuClick, onOpenPalette }) {
                 </nav>
             </div>
 
-            {/* Right: Search, Health, Notifications */}
+            {/* Right: Search, Health Badge, Alert Center */}
             <div className="flex items-center gap-2">
                 {/* Command palette trigger */}
                 <button
@@ -55,13 +107,20 @@ export default function AdminTopbar({ onMenuClick, onOpenPalette }) {
                     </kbd>
                 </button>
 
-                <SystemHealthIndicator compact />
+                {/* System health status badge — SSE-powered */}
+                <HealthBadge
+                    health={sse?.systemHealth}
+                    connected={sse?.connected}
+                />
 
-                <button className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors">
-                    <Bell size={18} />
-                    {/* Notification dot */}
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
-                </button>
+                {/* Alert Center — SSE-powered */}
+                <AlertCenter
+                    alerts={sse?.alerts || []}
+                    unreadCount={sse?.unreadCount || 0}
+                    onMarkRead={sse?.markAlertRead}
+                    onDismiss={sse?.dismissAlert}
+                    onClearAll={sse?.clearAllAlerts}
+                />
             </div>
         </header>
     )

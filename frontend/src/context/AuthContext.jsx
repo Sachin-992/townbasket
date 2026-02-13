@@ -121,14 +121,12 @@ export function AuthProvider({ children }) {
                 if (error) {
                     console.error('Failed to update Supabase metadata:', error)
                 } else {
-                    console.log('Supabase metadata updated:', data.user.user_metadata)
 
                     // CRITICAL: Force session refresh to get new JWT with updated roles
                     const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
                     if (refreshError) console.error('Token refresh failed:', refreshError)
 
                     if (session) {
-                        console.log('Token refreshed with new metadata')
                         setUser(session.user)
                     }
                 }

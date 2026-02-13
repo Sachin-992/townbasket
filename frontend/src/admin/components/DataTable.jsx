@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, memo } from 'react'
-import { ArrowUpDown, ArrowUp, ArrowDown, Download, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import ICON_MAP from '../utils/iconMap'
 import { TableSkeleton } from './SkeletonLoader'
+
+const { ArrowUpDown, ArrowUp, ArrowDown, Download, Search, ChevronLeft, ChevronRight } = ICON_MAP
 
 /**
  * Sortable, filterable, exportable data table.
@@ -73,21 +75,24 @@ function DataTable({ columns, data = [], loading, emptyMessage = 'No data found'
     return (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-4 p-4 border-b border-gray-100 dark:border-gray-700">
-                <div className="relative flex-1 max-w-xs">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 border-b border-gray-100 dark:border-gray-700">
+                <div className="relative flex-1">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
                         placeholder="Search..."
                         value={search}
                         onChange={e => { setSearch(e.target.value); setPage(0) }}
-                        className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400"
+                        inputMode="search"
+                        aria-label="Search table"
+                        className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400"
                     />
                 </div>
                 {exportable && (
                     <button
                         onClick={exportCSV}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        aria-label="Export table data as CSV"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     >
                         <Download size={14} />
                         Export
@@ -150,14 +155,16 @@ function DataTable({ columns, data = [], loading, emptyMessage = 'No data found'
                         <button
                             onClick={() => setPage(p => Math.max(0, p - 1))}
                             disabled={page === 0}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                            aria-label="Previous page"
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
                         >
                             <ChevronLeft size={16} />
                         </button>
                         <button
                             onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                             disabled={page === totalPages - 1}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
+                            aria-label="Next page"
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 transition-colors"
                         >
                             <ChevronRight size={16} />
                         </button>

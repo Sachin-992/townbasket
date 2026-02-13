@@ -42,17 +42,29 @@ def create_complaint(request):
 @require_role('admin')
 def list_complaints(request):
     """
-    List all complaints. Admin only.
+    List all complaints. Admin only. Paginated (max 100).
     """
-    # Filter by status if provided
     status_filter = request.query_params.get('status')
+    page = max(int(request.query_params.get('page', 1)), 1)
+    page_size = min(int(request.query_params.get('page_size', 20)), 100)
+
     if status_filter:
         complaints = Complaint.objects.filter(status=status_filter)
     else:
         complaints = Complaint.objects.all()
-        
-    serializer = ComplaintSerializer(complaints, many=True)
-    return Response(serializer.data)
+
+    total = complaints.count()
+    start = (page - 1) * page_size
+    page_complaints = complaints.order_by('-created_at')[start:start + page_size]
+
+    serializer = ComplaintSerializer(page_complaints, many=True)
+    return Response({
+        'results': serializer.data,
+        'count': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': (total + page_size - 1) // page_size,
+    })
 
 @api_view(['PATCH'])
 @require_auth

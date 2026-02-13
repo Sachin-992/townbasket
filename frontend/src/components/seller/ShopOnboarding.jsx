@@ -38,9 +38,7 @@ export default function ShopOnboarding({ user, onShopCreated }) {
                 owner_email: user.email,
             }
 
-            console.log('Creating shop:', shopData)
             const result = await shopsApi.createShop(shopData)
-            console.log('Result:', result)
 
             if (result.error) {
                 setError(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
@@ -119,6 +117,7 @@ export default function ShopOnboarding({ user, onShopCreated }) {
                                         onChange={handleChange}
                                         placeholder="Business Phone Number"
                                         required
+                                        inputMode="tel"
                                         className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 font-extrabold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary focus:bg-white transition-all shadow-sm tabular-nums"
                                     />
                                 </div>

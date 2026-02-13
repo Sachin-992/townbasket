@@ -155,3 +155,46 @@ class OrderItem(models.Model):
     def save(self, *args, **kwargs):
         self.total_price = self.quantity * self.unit_price
         super().save(*args, **kwargs)
+
+
+class Invoice(models.Model):
+    """
+    Invoice model for automated invoice generation.
+    One invoice per order. Generated when order status → delivered.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('generated', 'Generated'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=None, editable=False)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='invoice')
+    invoice_number = models.CharField(max_length=20, unique=True)
+    pdf_path = models.CharField(max_length=500, blank=True, default='')
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    generated_at = models.DateTimeField(null=True, blank=True)
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'invoices'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['order']),
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['invoice_number']),
+        ]
+
+    def __str__(self):
+        return f"Invoice {self.invoice_number} – Order {self.order.order_number}"
+
+    def save(self, *args, **kwargs):
+        import uuid as _uuid
+        if self.id is None:
+            self.id = _uuid.uuid4()
+        super().save(*args, **kwargs)
+

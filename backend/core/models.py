@@ -1,5 +1,7 @@
 from django.db import models
 from .audit import AuditLog  # noqa: F401 — exposed for Django model discovery
+from .fraud import FraudAlert  # noqa: F401 — exposed for Django model discovery
+from .metrics import AdminMetricsDaily  # noqa: F401 — exposed for Django model discovery
 
 class TownSettings(models.Model):
     """

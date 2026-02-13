@@ -17,5 +17,21 @@ cryptography>=41.0.0
 whitenoise>=6.6.0
 gunicorn>=21.2.0
 
+# Monitoring & Error Tracking
+sentry-sdk[django]>=1.40.0
+
+# Caching (Production)
+django-redis>=5.4.0
+
 # Development
 python-dotenv>=1.0.0
+
+# Invoice & PDF Generation
+xhtml2pdf>=0.2.11
+
+# Async Task Queue
+celery>=5.3.0
+redis>=5.0.0
+
+# Supabase Storage Client
+supabase>=2.0.0

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { usersApi } from '../../lib/api'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 
@@ -7,6 +9,8 @@ export default function SavedAddressesPage() {
     const { user } = useAuth()
     const [addresses, setAddresses] = useState([])
     const [loading, setLoading] = useState(true)
+    const toast = useToast()
+    const confirm = useConfirm()
     const [showAddModal, setShowAddModal] = useState(false)
     const [editingAddress, setEditingAddress] = useState(null)
     const [saving, setSaving] = useState(false)
@@ -60,7 +64,7 @@ export default function SavedAddressesPage() {
             closeModal()
         } catch (err) {
             console.error('Failed to save address:', err)
-            alert('Failed to save address. Please try again.')
+            toast.error('Failed to save address. Please try again.')
         } finally {
             setSaving(false)
         }
@@ -68,14 +72,14 @@ export default function SavedAddressesPage() {
 
     const handleDelete = async (addressId) => {
         if (!user?.id) return
-        if (!confirm('Are you sure you want to delete this address?')) return
+        if (!await confirm('Delete Address', 'Are you sure you want to delete this address?')) return
 
         try {
             await usersApi.deleteAddress(user.id, addressId)
             await loadAddresses()
         } catch (err) {
             console.error('Failed to delete address:', err)
-            alert('Failed to delete address. Please try again.')
+            toast.error('Failed to delete address. Please try again.')
         }
     }
 

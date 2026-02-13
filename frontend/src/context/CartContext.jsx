@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
 const CartContext = createContext({})
 
@@ -29,13 +29,17 @@ export function CartProvider({ children }) {
         }))
     }, [cartItems, cartShop, isInitialized])
 
+    // Switch cart to a new shop (used after user confirms)
+    const switchShop = useCallback((product, shop) => {
+        setCartItems([{ product, quantity: 1 }])
+        setCartShop(shop)
+    }, [])
+
     const addToCart = (product, shop) => {
         // Check if adding from different shop
         if (cartShop && cartShop.id !== shop.id && cartItems.length > 0) {
-            if (!window.confirm(`Your cart has items from ${cartShop.name}. Clear cart and add from ${shop.name}?`)) {
-                return false
-            }
-            setCartItems([])
+            // Return info for the caller to show confirmation UI
+            return { needs_confirm: true, currentShop: cartShop, newShop: shop, product }
         }
 
         setCartShop(shop)
@@ -95,6 +99,7 @@ export function CartProvider({ children }) {
         cartTotal,
         cartCount,
         addToCart,
+        switchShop,
         removeFromCart,
         updateQuantity,
         clearCart,

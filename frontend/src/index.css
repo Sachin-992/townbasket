@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* Override dark variant to use .dark class instead of @media prefers-color-scheme */
+@custom-variant dark (&:is(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════
    TownBasket Design System — Production Build

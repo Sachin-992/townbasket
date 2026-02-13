@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
+import { useToast } from '../../context/ToastContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import ProductCard from '../../components/customer/ProductCard'
 import { shopsApi, productsApi } from '../../lib/api'
@@ -9,6 +10,7 @@ export default function ShopDetailPage() {
     const { shopId } = useParams()
     const navigate = useNavigate()
     const { cartCount, cartTotal, cartShop } = useCart()
+    const toast = useToast()
     const [shop, setShop] = useState(null)
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -65,10 +67,10 @@ export default function ShopDetailPage() {
                 })
             } else {
                 navigator.clipboard.writeText(window.location.href)
-                alert('Link copied to clipboard!')
+                toast.success('Link copied to clipboard!')
             }
         } catch (err) {
-            console.log('Share cancelled')
+            /* Share cancelled by user */
         }
     }
 

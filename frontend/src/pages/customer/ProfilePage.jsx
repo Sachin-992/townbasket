@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
+import { useToast } from '../../context/ToastContext'
 import { usersApi } from '../../lib/api'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 
@@ -9,6 +10,7 @@ export default function ProfilePage() {
     const { user, signOut } = useAuth()
     const { clearCart } = useCart()
     const navigate = useNavigate()
+    const toast = useToast()
     const [stats, setStats] = useState({ orders: 0, rewards: 0, favorites: 0 })
     const [backendUser, setBackendUser] = useState(null)
     const [showEditModal, setShowEditModal] = useState(false)
@@ -64,7 +66,7 @@ export default function ProfilePage() {
             await loadUserData()
         } catch (err) {
             console.error('Failed to update profile:', err)
-            alert('Failed to update profile. Please try again.')
+            toast.error('Failed to update profile. Please try again.')
         } finally {
             setSaving(false)
         }

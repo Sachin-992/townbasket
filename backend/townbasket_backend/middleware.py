@@ -265,3 +265,31 @@ class SupabaseAuthMiddleware:
         
         response = self.get_response(request)
         return response
+
+
+class SecurityHeadersMiddleware:
+    """
+    Middleware to add security headers including CSP to all responses.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        # Content Security Policy
+        csp_policy = getattr(settings, 'CSP_POLICY', None)
+        if csp_policy:
+            response['Content-Security-Policy'] = csp_policy
+
+        # Additional security headers
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['X-XSS-Protection'] = '1; mode=block'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response['Permissions-Policy'] = (
+            'camera=(), microphone=(), geolocation=(self), '
+            'payment=(), usb=()'
+        )
+
+        return response

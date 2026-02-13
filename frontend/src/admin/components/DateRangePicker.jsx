@@ -1,6 +1,8 @@
 import { useState, memo } from 'react'
-import { Calendar } from 'lucide-react'
+import ICON_MAP from '../utils/iconMap'
 import { format, subDays, startOfWeek, startOfMonth, subMonths } from 'date-fns'
+
+const { Calendar } = ICON_MAP
 
 const PRESETS = [
     { label: 'Today', getValue: () => ({ start: new Date(), end: new Date() }) },
@@ -42,8 +44,8 @@ function DateRangePicker({ onChange, activeLabel = '30 days' }) {
                                     setOpen(false)
                                 }}
                                 className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${activeLabel === preset.label
-                                        ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-semibold'
-                                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-semibold'
+                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 {preset.label}

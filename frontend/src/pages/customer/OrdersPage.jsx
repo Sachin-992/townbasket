@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import CustomerLayout from '../../components/customer/CustomerLayout'
 import { ordersApi } from '../../lib/api'
+
+// Auto-refresh interval for ongoing orders (15 seconds)
+const POLL_INTERVAL = 15000
 
 export default function OrdersPage() {
     const { user } = useAuth()
@@ -12,41 +15,102 @@ export default function OrdersPage() {
     const [activeTab, setActiveTab] = useState('ongoing')
     const [selectedOrder, setSelectedOrder] = useState(null)
     const [showHelpModal, setShowHelpModal] = useState(false)
+    const [justDelivered, setJustDelivered] = useState(null) // Track freshly delivered order for celebration
+    const pollRef = useRef(null)
+    const prevStatusRef = useRef({}) // Track previous statuses for animation detection
 
-    useEffect(() => {
-        if (user?.id) loadOrders()
-    }, [user])
-
-    const loadOrders = async () => {
+    // Load orders (used for initial load and polling)
+    const loadOrders = useCallback(async (silent = false) => {
         try {
+            if (!silent) setLoading(true)
             const data = await ordersApi.getCustomerOrders(user.id)
-            setOrders(Array.isArray(data) ? data : [])
+            const newOrders = Array.isArray(data) ? data : []
+
+            // Detect status changes for animations
+            newOrders.forEach(order => {
+                const prevStatus = prevStatusRef.current[order.id]
+                if (prevStatus && prevStatus !== order.status) {
+                    // Status changed! If it just got delivered, trigger celebration
+                    if (order.status === 'delivered') {
+                        setJustDelivered(order)
+                        // Auto-clear celebration after 4 seconds
+                        setTimeout(() => setJustDelivered(null), 4000)
+                    }
+                }
+                prevStatusRef.current[order.id] = order.status
+            })
+
+            setOrders(newOrders)
+
+            // Update selected order in modal if it's open
+            if (selectedOrder) {
+                const updated = newOrders.find(o => o.id === selectedOrder.id)
+                if (updated) setSelectedOrder(updated)
+            }
         } catch (err) {
             console.error('Failed to load orders:', err)
         } finally {
             setLoading(false)
         }
-    }
+    }, [user?.id, selectedOrder?.id])
+
+    // Initial load
+    useEffect(() => {
+        if (user?.id) loadOrders()
+    }, [user])
+
+    // Auto-polling — runs every 15s when there are ongoing orders
+    useEffect(() => {
+        const hasOngoing = orders.some(o => !['delivered', 'cancelled'].includes(o.status))
+
+        if (hasOngoing && user?.id) {
+            pollRef.current = setInterval(() => loadOrders(true), POLL_INTERVAL)
+        }
+
+        return () => {
+            if (pollRef.current) {
+                clearInterval(pollRef.current)
+                pollRef.current = null
+            }
+        }
+    }, [orders.length, user?.id, loadOrders])
+
+    // Auto-switch to History tab when all ongoing orders are completed
+    useEffect(() => {
+        const ongoingCount = orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length
+        if (activeTab === 'ongoing' && ongoingCount === 0 && orders.length > 0 && !loading) {
+            // Small delay so user can see the last step complete
+            const timer = setTimeout(() => setActiveTab('past'), 2500)
+            return () => clearTimeout(timer)
+        }
+    }, [orders, activeTab, loading])
 
     const ongoingOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status))
     const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status))
 
     const getStatusConfig = (status) => {
-        // Step numbers: 1-5 for 5 progress circles
-        // pending=1, confirmed=2, preparing=3, ready=4, out_for_delivery=4.5 (between ready and delivery), delivered=5
         const configs = {
-            pending: { label: 'Order Placed', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: '🕐', step: 1 },
-            confirmed: { label: 'Confirmed', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: '✓', step: 2 },
-            preparing: { label: 'Preparing', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: '👨‍🍳', step: 3 },
-            ready: { label: 'Ready', color: 'bg-teal-100 text-teal-700 border-teal-200', icon: '📦', step: 4 },
-            out_for_delivery: { label: 'On the way', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: '🚚', step: 4.5 },
-            delivered: { label: 'Delivered', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: '✅', step: 5 },
-            cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700 border-red-200', icon: '❌', step: 0 },
+            pending: { label: 'Order Placed', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: '🕐', step: 1, message: 'Waiting for shop to confirm your order...' },
+            confirmed: { label: 'Confirmed', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: '✓', step: 2, message: 'Shop has confirmed! Preparing your order...' },
+            preparing: { label: 'Preparing', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: '👨‍🍳', step: 3, message: 'Your order is being packed with care...' },
+            ready: { label: 'Ready', color: 'bg-teal-100 text-teal-700 border-teal-200', icon: '📦', step: 4, message: 'Packed and ready for pickup by delivery partner!' },
+            out_for_delivery: { label: 'On the way', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: '🚚', step: 4.5, message: 'Your order is on its way to you!' },
+            delivered: { label: 'Delivered', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: '✅', step: 5, message: 'Order delivered successfully!' },
+            cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700 border-red-200', icon: '❌', step: 0, message: 'This order has been cancelled.' },
         }
-        return configs[status] || { label: status, color: 'bg-gray-100 text-gray-700 border-gray-200', icon: '📋', step: 0 }
+        return configs[status] || { label: status, color: 'bg-gray-100 text-gray-700 border-gray-200', icon: '📋', step: 0, message: '' }
     }
 
     const displayOrders = activeTab === 'ongoing' ? ongoingOrders : pastOrders
+
+    // Progress steps for the animated tracker
+    const progressSteps = [
+        { key: 'placed', label: 'Placed', icon: '🛒', stepNum: 1 },
+        { key: 'confirmed', label: 'Confirmed', icon: '✓', stepNum: 2 },
+        { key: 'preparing', label: 'Preparing', icon: '👨‍🍳', stepNum: 3 },
+        { key: 'ready', label: 'Ready', icon: '📦', stepNum: 4 },
+        { key: 'delivered', label: 'Delivered', icon: '🏠', stepNum: 5 },
+    ]
 
     return (
         <CustomerLayout title="My Orders" showBack>
@@ -87,6 +151,25 @@ export default function OrdersPage() {
                             )}
                         </button>
                     </div>
+
+                    {/* Live Update Indicator */}
+                    {activeTab === 'ongoing' && ongoingOrders.length > 0 && (
+                        <div className="flex items-center justify-center gap-2 mb-4 text-xs text-emerald-600 font-medium">
+                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                            Live tracking • Auto-updating every 15s
+                        </div>
+                    )}
+
+                    {/* Delivery Celebration Toast */}
+                    {justDelivered && (
+                        <div className="mb-4 p-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl shadow-lg animate-slide-up flex items-center gap-3">
+                            <span className="text-3xl">🎉</span>
+                            <div>
+                                <p className="font-bold">Order Delivered!</p>
+                                <p className="text-white/80 text-sm">#{justDelivered.order_number} has been delivered successfully</p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Loading State */}
                     {loading ? (
@@ -160,30 +243,42 @@ export default function OrdersPage() {
                                             </div>
                                         </div>
 
-                                        {/* Progress Bar - Only for ongoing orders */}
+                                        {/* Animated Progress Tracker — Only for ongoing orders */}
                                         {isOngoing && statusConfig.step > 0 && (
-                                            <div className="px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    {['Placed', 'Confirmed', 'Preparing', 'Ready', 'Delivery'].map((step, idx) => (
-                                                        <div key={step} className="flex flex-col items-center">
-                                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${idx + 1 <= statusConfig.step
-                                                                ? 'bg-emerald-500 text-white'
-                                                                : 'bg-gray-200 text-gray-400'
-                                                                }`}>
-                                                                {idx + 1 <= statusConfig.step ? '✓' : idx + 1}
-                                                            </div>
-                                                            <span className={`text-[10px] mt-1 ${idx + 1 <= statusConfig.step ? 'text-emerald-600' : 'text-gray-400'
-                                                                }`}>
-                                                                {step}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                            <div className="px-4 py-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
+                                                {/* Status Message */}
+                                                <p className="text-center text-sm font-semibold text-emerald-700 mb-3">
+                                                    {statusConfig.message}
+                                                </p>
+
+                                                {/* Progress Step Circles */}
+                                                <div className="flex items-center justify-between relative mb-1">
+                                                    {/* Background track line */}
+                                                    <div className="absolute top-3 left-[10%] right-[10%] h-1 bg-gray-200 rounded-full z-0" />
+                                                    {/* Active track line */}
                                                     <div
-                                                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
-                                                        style={{ width: `${(statusConfig.step / 5) * 100}%` }}
+                                                        className="absolute top-3 left-[10%] h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full z-[1] transition-all duration-1000 ease-out"
+                                                        style={{ width: `${Math.max(0, ((statusConfig.step - 1) / 4) * 80)}%` }}
                                                     />
+
+                                                    {progressSteps.map((step) => {
+                                                        const isCompleted = step.stepNum <= statusConfig.step
+                                                        const isCurrent = Math.ceil(statusConfig.step) === step.stepNum
+                                                        return (
+                                                            <div key={step.key} className="flex flex-col items-center relative z-10">
+                                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-700 ${isCompleted
+                                                                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200'
+                                                                    : 'bg-white text-gray-400 border-2 border-gray-200'
+                                                                    } ${isCurrent ? 'ring-4 ring-emerald-200 scale-110' : ''}`}>
+                                                                    {isCompleted ? '✓' : step.stepNum}
+                                                                </div>
+                                                                <span className={`text-[10px] mt-1.5 font-semibold ${isCompleted ? 'text-emerald-600' : 'text-gray-400'
+                                                                    } ${isCurrent ? 'font-bold' : ''}`}>
+                                                                    {step.label}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                    })}
                                                 </div>
                                             </div>
                                         )}
@@ -311,6 +406,7 @@ export default function OrdersPage() {
                             </div>
                             <button
                                 onClick={() => setSelectedOrder(null)}
+                                aria-label="Close order details"
                                 className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
                             >
                                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,9 +415,9 @@ export default function OrdersPage() {
                             </button>
                         </div>
 
-                        {/* Order Status */}
-                        <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
-                            <div className="flex items-center gap-3">
+                        {/* Live Order Status with Full Progress Tracker */}
+                        <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
+                            <div className="flex items-center gap-3 mb-4">
                                 <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-2xl">
                                     {selectedOrder.status === 'delivered' ? '✅' : selectedOrder.status === 'cancelled' ? '❌' : '📦'}
                                 </div>
@@ -334,6 +430,52 @@ export default function OrdersPage() {
                                     </p>
                                 </div>
                             </div>
+
+                            {/* Vertical Timeline Progress */}
+                            {getStatusConfig(selectedOrder.status).step > 0 && (
+                                <div className="ml-2 space-y-0">
+                                    {progressSteps.map((step, idx) => {
+                                        const currentStep = getStatusConfig(selectedOrder.status).step
+                                        const isCompleted = step.stepNum <= currentStep
+                                        const isCurrent = Math.ceil(currentStep) === step.stepNum
+                                        const isLast = idx === progressSteps.length - 1
+
+                                        return (
+                                            <div key={step.key} className="flex items-start gap-3">
+                                                <div className="flex flex-col items-center">
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-700 ${isCompleted
+                                                        ? 'bg-emerald-500 text-white shadow-md'
+                                                        : 'bg-gray-200 text-gray-400'
+                                                        } ${isCurrent ? 'ring-4 ring-emerald-200 scale-110' : ''}`}>
+                                                        {isCompleted ? '✓' : step.icon}
+                                                    </div>
+                                                    {!isLast && (
+                                                        <div className={`w-0.5 h-8 transition-all duration-700 ${isCompleted && step.stepNum < currentStep ? 'bg-emerald-500' : 'bg-gray-200'}`} />
+                                                    )}
+                                                </div>
+                                                <div className={`pt-1 ${isCurrent ? 'font-bold' : ''}`}>
+                                                    <p className={`text-sm ${isCompleted ? 'text-emerald-700' : 'text-gray-400'}`}>
+                                                        {step.label}
+                                                    </p>
+                                                    {isCurrent && (
+                                                        <p className="text-xs text-emerald-600 mt-0.5 animate-pulse">
+                                                            {getStatusConfig(selectedOrder.status).message}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Live indicator */}
+                            {!['delivered', 'cancelled'].includes(selectedOrder.status) && (
+                                <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-emerald-200/50 text-xs text-emerald-600 font-medium">
+                                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                    Live tracking active
+                                </div>
+                            )}
                         </div>
 
                         {/* Delivery Partner Info */}
@@ -434,6 +576,7 @@ export default function OrdersPage() {
                             </div>
                             <button
                                 onClick={() => { setShowHelpModal(false); setSelectedOrder(null); }}
+                                aria-label="Close help"
                                 className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
                             >
                                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

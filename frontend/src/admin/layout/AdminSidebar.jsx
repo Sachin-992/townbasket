@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, memo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useDarkMode } from '../hooks/useDarkMode'
@@ -7,7 +7,7 @@ import ICON_MAP, { getIcon } from '../utils/iconMap'
 
 const { Moon, Sun, LogOut, ChevronsLeft, ChevronsRight } = ICON_MAP
 
-export default function AdminSidebar({ collapsed, onToggleCollapse }) {
+function AdminSidebar({ collapsed, onToggleCollapse }) {
     const { pathname } = useLocation()
     const { signOut, user } = useAuth()
     const { isDark, toggle: toggleDark } = useDarkMode()
@@ -111,3 +111,5 @@ export default function AdminSidebar({ collapsed, onToggleCollapse }) {
         </>
     )
 }
+
+export default memo(AdminSidebar)

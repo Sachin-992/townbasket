@@ -32,19 +32,25 @@ const DeliveryDashboard = lazy(() => import('./pages/DeliveryDashboard'))
 
 // Admin — modular control center
 const AdminLayout = lazy(() => import('./admin/layout/AdminLayout'))
-const AdminOverview = lazy(() => import('./admin/pages/OverviewPage'))
-const AdminSellers = lazy(() => import('./admin/pages/SellersPage'))
-const AdminOrders = lazy(() => import('./admin/pages/OrdersPage'))
-const AdminDelivery = lazy(() => import('./admin/pages/DeliveryPage'))
+const AdminOverview = lazy(() => import('./admin/overview/index.js').then(m => ({ default: m.OverviewPage })))
+const AdminSellers = lazy(() => import('./admin/shops/index.js').then(m => ({ default: m.SellersPage })))
+const AdminOrders = lazy(() => import('./admin/orders/index.js').then(m => ({ default: m.OrdersPage })))
+const AdminDelivery = lazy(() => import('./admin/delivery/index.js').then(m => ({ default: m.DeliveryPage })))
 const AdminComplaints = lazy(() => import('./admin/pages/ComplaintsPage'))
 const AdminCategories = lazy(() => import('./admin/pages/CategoriesPage'))
 const AdminSettings = lazy(() => import('./admin/pages/SettingsPage'))
-const AdminAuditLog = lazy(() => import('./admin/pages/AuditLogPage'))
+const AdminAuditLog = lazy(() => import('./admin/audit/index.js').then(m => ({ default: m.AuditLogPage })))
+const AdminFraud = lazy(() => import('./admin/fraud/index.js').then(m => ({ default: m.FraudPage })))
+const AdminAnalytics = lazy(() => import('./admin/revenue/index.js').then(m => ({ default: m.AnalyticsPage })))
+const AdminSystemHealth = lazy(() => import('./admin/system/index.js').then(m => ({ default: m.SystemHealthPage })))
+const AdminUsers = lazy(() => import('./admin/users/index.js').then(m => ({ default: m.UsersPage })))
+const AdminNotifications = lazy(() => import('./admin/notifications/index.js').then(m => ({ default: m.NotificationsPage })))
 
 // Customer Pages
 const HomePage = lazy(() => import('./pages/customer/HomePage'))
 const ShopsListPage = lazy(() => import('./pages/customer/ShopsListPage'))
 const ShopDetailPage = lazy(() => import('./pages/customer/ShopDetailPage'))
+
 const CartPage = lazy(() => import('./pages/customer/CartPage'))
 const CheckoutPage = lazy(() => import('./pages/customer/CheckoutPage'))
 const OrderSuccessPage = lazy(() => import('./pages/customer/OrderSuccessPage'))
@@ -136,12 +142,17 @@ function App() {
                     >
                       <Route index element={<AdminOverview />} />
                       <Route path="sellers" element={<AdminSellers />} />
+                      <Route path="users" element={<AdminUsers />} />
                       <Route path="orders" element={<AdminOrders />} />
                       <Route path="delivery" element={<AdminDelivery />} />
                       <Route path="complaints" element={<AdminComplaints />} />
                       <Route path="categories" element={<AdminCategories />} />
+                      <Route path="analytics" element={<AdminAnalytics />} />
+                      <Route path="fraud" element={<AdminFraud />} />
+                      <Route path="system-health" element={<AdminSystemHealth />} />
                       <Route path="audit-log" element={<AdminAuditLog />} />
                       <Route path="settings" element={<AdminSettings />} />
+                      <Route path="notifications" element={<AdminNotifications />} />
                     </Route>
 
                     {/* Default redirect */}

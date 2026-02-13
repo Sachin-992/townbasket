@@ -15,7 +15,7 @@ async function getAuthHeaders() {
     }
 }
 
-async function adminFetch(endpoint, options = {}) {
+export async function adminFetch(endpoint, options = {}) {
     const headers = await getAuthHeaders()
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
@@ -39,11 +39,29 @@ export const overviewApi = {
 // ── System ──────────────────────────────────────
 export const systemApi = {
     getHealth: () => adminFetch('/admin/system-health/'),
+    quickSearch: (q) => adminFetch(`/admin/search/?q=${encodeURIComponent(q)}`),
+    getPermissions: () => adminFetch('/admin/permissions/'),
     getActivityFeed: (page = 1) =>
         adminFetch(`/admin/activity-feed/?page=${page}`),
     getAuditLogs: (page = 1, filters = {}) => {
         const params = new URLSearchParams({ page: String(page), ...filters })
         return adminFetch(`/admin/audit-logs/?${params}`)
+    },
+    getAuditAdmins: () => adminFetch('/admin/audit-logs/admins/'),
+    exportAuditCSV: async (filters = {}) => {
+        const params = new URLSearchParams(filters)
+        const url = `${import.meta.env.VITE_API_URL}/admin/audit-logs/export/?${params}`
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token')
+        const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) throw new Error('Export failed')
+        const blob = await res.blob()
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = 'audit-log.csv'
+        a.click()
+        URL.revokeObjectURL(a.href)
     },
 }
 
@@ -60,10 +78,13 @@ export const adminShopsApi = {
 // ── Orders (admin) ──────────────────────────────
 export const adminOrdersApi = {
     getAll: () => adminFetch('/orders/all/'),
+    downloadInvoice: (orderId) => adminFetch(`/orders/${orderId}/invoice/`),
+    resendInvoice: (orderId) => adminFetch(`/orders/${orderId}/invoice/resend/`, { method: 'POST' }),
 }
 
 // ── Users (admin) ────────────────────────────────
 export const adminUsersApi = {
+    getAll: () => adminFetch('/users/all/'),
     getByRole: (role) => adminFetch(`/users/role/${role}/`),
     toggleActive: (id) =>
         adminFetch(`/users/${id}/toggle-active/`, { method: 'PATCH' }),
@@ -94,3 +115,65 @@ export const adminSettingsApi = {
             body: JSON.stringify(data),
         }),
 }
+
+// ── Advanced Analytics ──────────────────────────
+export const analyticsApi = {
+    getTopProducts: (days = 30) =>
+        adminFetch(`/admin/analytics/top-products/?days=${days}`),
+    getTopShops: (days = 30) =>
+        adminFetch(`/admin/analytics/top-shops/?days=${days}`),
+    getPeakHours: (days = 30) =>
+        adminFetch(`/admin/analytics/peak-hours/?days=${days}`),
+    getConversionFunnel: (days = 30) =>
+        adminFetch(`/admin/analytics/conversion-funnel/?days=${days}`),
+    getCustomerLifetimeValue: (limit = 20) =>
+        adminFetch(`/admin/analytics/clv/?limit=${limit}`),
+    getDeliveryEfficiency: (days = 30) =>
+        adminFetch(`/admin/analytics/delivery-efficiency/?days=${days}`),
+}
+
+// ── Fraud Detection ─────────────────────────────
+export const fraudApi = {
+    getAlerts: (params = {}) => {
+        const qs = new URLSearchParams(params)
+        return adminFetch(`/admin/fraud/alerts/?${qs}`)
+    },
+    dismissAlert: (id, note = '') =>
+        adminFetch(`/admin/fraud/alerts/${id}/dismiss/`, {
+            method: 'POST',
+            body: JSON.stringify({ note }),
+        }),
+    investigateAlert: (id, note = '') =>
+        adminFetch(`/admin/fraud/alerts/${id}/investigate/`, {
+            method: 'POST',
+            body: JSON.stringify({ note }),
+        }),
+    confirmAlert: (id, note = '') =>
+        adminFetch(`/admin/fraud/alerts/${id}/confirm/`, {
+            method: 'POST',
+            body: JSON.stringify({ note }),
+        }),
+    getHighRiskUsers: (minOrders = 3) =>
+        adminFetch(`/admin/fraud/high-risk-users/?min_orders=${minOrders}`),
+    getSummary: () =>
+        adminFetch('/admin/fraud/summary/'),
+    triggerScan: () =>
+        adminFetch('/admin/fraud/scan/', { method: 'POST' }),
+}
+
+// ── Bulk Actions ────────────────────────────────
+export const bulkApi = {
+    bulkShops: (action, ids, verifyToken = '') =>
+        adminFetch('/admin/bulk/shops/', {
+            method: 'POST',
+            body: JSON.stringify({ action, ids }),
+            headers: verifyToken ? { 'X-Admin-Verify-Token': verifyToken } : {},
+        }),
+    bulkUsers: (action, ids, verifyToken = '') =>
+        adminFetch('/admin/bulk/users/', {
+            method: 'POST',
+            body: JSON.stringify({ action, ids }),
+            headers: verifyToken ? { 'X-Admin-Verify-Token': verifyToken } : {},
+        }),
+}
+

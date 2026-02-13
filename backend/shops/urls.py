@@ -11,5 +11,6 @@ urlpatterns = [
     path('<int:shop_id>/toggle-open/', views.toggle_shop_open, name='toggle_shop_open'),
     path('<int:shop_id>/approve/', views.approve_shop, name='approve_shop'),
     path('<int:shop_id>/reject/', views.reject_shop, name='reject_shop'),
+    path('<int:shop_id>/toggle-active/', views.toggle_shop_active, name='toggle_shop_active'),
     path('admin/stats/', views.get_admin_stats, name='get_admin_stats'),
 ]

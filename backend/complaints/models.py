@@ -38,6 +38,10 @@ class Complaint(models.Model):
     class Meta:
         db_table = 'complaints'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at'], name='idx_complaint_status_date'),
+            models.Index(fields=['created_at'], name='idx_complaint_created'),
+        ]
 
     def __str__(self):
         return f"{self.get_issue_type_display()} - {self.user_name}"

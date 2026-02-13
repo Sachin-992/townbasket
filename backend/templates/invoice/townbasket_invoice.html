@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Invoice {{ invoice_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 12mm 15mm 12mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            color: #222;
+            line-height: 1.5;
+        }
+
+        /* Container */
+        .invoice-box {
+            width: 100%;
+            border: 2px solid #333;
+            padding: 0;
+        }
+
+        /* Header */
+        .header {
+            display: table;
+            width: 100%;
+            padding: 12px 16px;
+            border-bottom: 2px solid #333;
+        }
+
+        .header-logo {
+            display: table-cell;
+            width: 80px;
+            vertical-align: top;
+        }
+
+        .header-logo img {
+            width: 70px;
+            height: auto;
+        }
+
+        .header-info {
+            display: table-cell;
+            vertical-align: top;
+            padding-left: 10px;
+        }
+
+        .header-info .company-name {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #111;
+        }
+
+        .header-info .address {
+            font-size: 10px;
+            color: #444;
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+
+        /* Title */
+        .title-section {
+            text-align: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .title-section h2 {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Order + Customer Info */
+        .info-section {
+            display: table;
+            width: 100%;
+            padding: 10px 16px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .customer-details {
+            display: table-cell;
+            width: 55%;
+            vertical-align: top;
+        }
+
+        .order-details {
+            display: table-cell;
+            width: 45%;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        .info-label {
+            font-weight: 700;
+            font-size: 11px;
+            text-decoration: underline;
+            margin-bottom: 4px;
+        }
+
+        .info-text {
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        /* Items Table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .items-table th {
+            background: #f0f0f0;
+            border: 1px solid #333;
+            padding: 6px 8px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .items-table td {
+            border: 1px solid #999;
+            padding: 6px 8px;
+            font-size: 11px;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .items-table td.desc {
+            text-align: left;
+        }
+
+        .items-table td.amount {
+            text-align: right;
+        }
+
+        /* Totals */
+        .totals-section {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .totals-section td {
+            border: 1px solid #999;
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+
+        .totals-section .label {
+            text-align: right;
+            font-weight: 600;
+            width: 80%;
+        }
+
+        .totals-section .value {
+            text-align: right;
+            width: 20%;
+            font-weight: 600;
+        }
+
+        .grand-total .label,
+        .grand-total .value {
+            font-size: 12px;
+            font-weight: 800;
+            background: #f0f0f0;
+        }
+
+        /* Amount In Words */
+        .words-section {
+            padding: 8px 16px;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .words-section strong {
+            font-size: 11px;
+        }
+
+        /* Footer */
+        .footer-section {
+            padding: 10px 16px;
+        }
+
+        .terms {
+            font-size: 9px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .terms p {
+            margin-bottom: 2px;
+        }
+
+        .signatures {
+            display: table;
+            width: 100%;
+            padding-top: 20px;
+        }
+
+        .sig-left {
+            display: table-cell;
+            width: 50%;
+            vertical-align: bottom;
+            padding-top: 30px;
+        }
+
+        .sig-right {
+            display: table-cell;
+            width: 50%;
+            vertical-align: bottom;
+            text-align: right;
+            padding-top: 10px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #333;
+            display: inline-block;
+            width: 180px;
+            margin-top: 30px;
+        }
+
+        .sig-label {
+            font-size: 10px;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .computer-gen {
+            text-align: center;
+            font-size: 9px;
+            color: #888;
+            font-style: italic;
+            padding: 6px 0 4px;
+            border-top: 1px solid #ddd;
+            margin-top: 8px;
+        }
+
+        /* Currency */
+        .rupee::before {
+            content: '₹ ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invoice-box">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-info">
+                <div class="company-name">TN24 AGRIFRESH</div>
+                <div class="address">
+                    NO.2/1060/D,<br />
+                    DENKANIKOTTAI, RAYAKOTTAI,, PALAYUR ROAD, KRISHNAGIRI, TAMIL NADU,<br />
+                    DHARMAPURI, Pin: 635116<br />
+                    Mobile No : 6374226315
+                </div>
+            </div>
+        </div>
+
+        <!-- TITLE -->
+        <div class="title-section">
+            <h2>ORDER COPY</h2>
+        </div>
+
+        <!-- ORDER & CUSTOMER INFO -->
+        <div class="info-section">
+            <div class="customer-details">
+                <div class="info-label">Customer Details:</div>
+                <div class="info-text">
+                    {{ customer_name }}<br />
+                    {{ customer_address }}{% if customer_town %}, {{ customer_town }}{% endif %}<br />
+                    Mobile: {{ customer_phone }}
+                </div>
+            </div>
+            <div class="order-details">
+                <div class="info-text">
+                    <strong>Order No:</strong> {{ order_number }}<br />
+                    <strong>Order Date:</strong> {{ order_date }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width:6%">S.No</th>
+                    <th style="width:34%">Description</th>
+                    <th style="width:10%">HSN</th>
+                    <th style="width:8%">Qty</th>
+                    <th style="width:12%">UOM</th>
+                    <th style="width:15%">Rate</th>
+                    <th style="width:15%">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.sno }}</td>
+                    <td class="desc">
+                        {{ item.description }}
+                        {% if item.category %}<br /><small>Category : {{ item.shop_name }}</small>{% endif %}
+                    </td>
+                    <td>{{ item.hsn }}</td>
+                    <td>{{ item.qty }}</td>
+                    <td>{{ item.uom }}</td>
+                    <td class="amount">{{ item.rate }}</td>
+                    <td class="amount">{{ item.amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- TOTALS -->
+        <table class="totals-section">
+            <tr>
+                <td class="label">Subtotal:</td>
+                <td class="value">{{ subtotal }}</td>
+            </tr>
+            <tr>
+                <td class="label">Taxable Amount:</td>
+                <td class="value">{{ taxable_amount }}</td>
+            </tr>
+            <tr>
+                <td class="label">Delivery Charge:</td>
+                <td class="value">{{ delivery_charge }}</td>
+            </tr>
+            {% if discount and discount != "0.00" %}
+            <tr>
+                <td class="label">Discount:</td>
+                <td class="value">-{{ discount }}</td>
+            </tr>
+            {% endif %}
+            <tr class="grand-total">
+                <td class="label">Grand Total:</td>
+                <td class="value">{{ grand_total }}</td>
+            </tr>
+        </table>
+
+        <!-- AMOUNT IN WORDS -->
+        <div class="words-section">
+            <strong>Amount in Words: {{ amount_in_words }}</strong>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer-section">
+            <div class="terms">
+                <strong>Terms &amp; Conditions:</strong>
+                <p>1. Goods once sold will not be taken back or exchanged</p>
+                <p>2. All disputes subject to Chennai jurisdiction only</p>
+                <p>3. Payment terms as agreed</p>
+            </div>
+
+            <div class="signatures">
+                <div class="sig-left">
+                    <div class="sig-line"></div>
+                    <div class="sig-label">Customer Signature</div>
+                </div>
+                <div class="sig-right">
+                    <div><strong>For, TN24 AGRIFRESH</strong></div>
+                    <div class="sig-line"></div>
+                    <div class="sig-label">Authorised Signatory</div>
+                </div>
+            </div>
+
+            <div class="computer-gen">
+                This is a computer-generated document
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

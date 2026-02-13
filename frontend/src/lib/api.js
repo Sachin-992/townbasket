@@ -8,10 +8,8 @@ const getAuthHeaders = async () => {
         const { data } = await supabase.auth.getSession()
         const session = data?.session
 
-        console.log('getAuthHeaders - Session:', session ? 'Found' : 'Missing', 'Token:', session?.access_token ? 'Present' : 'None')
-
         if (!session?.access_token) {
-            console.warn('Authentication Warning: No active session found when requesting headers')
+            // No active session — request may fail auth
         }
 
         return {
@@ -27,9 +25,7 @@ const getAuthHeaders = async () => {
 // Handle API response
 const handleResponse = async (response) => {
     if (response.status === 401) {
-        // Token expired or invalid - trigger re-auth
-        console.warn('Unauthorized - token may be expired')
-        // Could trigger logout here if needed
+        // Token expired or invalid
     }
 
     if (!response.ok) {
@@ -54,7 +50,6 @@ const fetchWithRetry = async (url, options = {}, retries = 2, backoff = 500) => 
         const isSafeMethod = !options.method || options.method === 'GET'
 
         if (retries > 0 && isSafeMethod) {
-            console.warn(`Retrying request to ${url}... (${retries} attempts left)`)
             await new Promise(r => setTimeout(r, backoff))
             return fetchWithRetry(url, options, retries - 1, backoff * 1.5)
         }
@@ -146,31 +141,21 @@ export const shopsApi = {
     },
 
     rejectShop: async (shopId) => {
-        const { data, error } = await supabase.auth.getSession()
-        if (error || !data.session) throw new Error('Not authenticated')
-
-        const response = await fetch(`${API_URL}/api/shops/${shopId}/reject/`, {
+        const headers = await getAuthHeaders()
+        const response = await fetchWithRetry(`${API_BASE_URL}/shops/${shopId}/reject/`, {
             method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${data.session.access_token}`,
-                'Content-Type': 'application/json',
-            },
+            headers,
         })
-        return response.json()
+        return handleResponse(response)
     },
 
     toggleShopActive: async (shopId) => {
-        const { data, error } = await supabase.auth.getSession()
-        if (error || !data.session) throw new Error('Not authenticated')
-
-        const response = await fetch(`${API_BASE_URL}/shops/${shopId}/toggle-active/`, {
+        const headers = await getAuthHeaders()
+        const response = await fetchWithRetry(`${API_BASE_URL}/shops/${shopId}/toggle-active/`, {
             method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${data.session.access_token}`,
-                'Content-Type': 'application/json',
-            },
+            headers,
         })
-        return response.json()
+        return handleResponse(response)
     },
 
     // Admin Stats
@@ -380,17 +365,12 @@ export const usersApi = {
     },
 
     toggleUserActive: async (userId) => {
-        const { data, error } = await supabase.auth.getSession()
-        if (error || !data.session) throw new Error('Not authenticated')
-
-        const response = await fetch(`${API_BASE_URL}/users/${userId}/toggle-active/`, {
+        const headers = await getAuthHeaders()
+        const response = await fetchWithRetry(`${API_BASE_URL}/users/${userId}/toggle-active/`, {
             method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${data.session.access_token}`,
-                'Content-Type': 'application/json',
-            },
+            headers,
         })
-        return response.json()
+        return handleResponse(response)
     },
 
     toggleOnlineStatus: async (supabaseUid) => {
@@ -527,7 +507,7 @@ export const settingsApi = {
 
     updateSettings: async (settingsData) => {
         const headers = await getAuthHeaders()
-        const response = await fetchWithRetry(`${API_BASE_URL}/core/settings/`, {
+        const response = await fetchWithRetry(`${API_BASE_URL}/core/settings/update/`, {
             method: 'PATCH',
             headers,
             body: JSON.stringify(settingsData)

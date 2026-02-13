@@ -3,7 +3,9 @@ import { useSettings } from '../hooks/useAdminData'
 import { adminSettingsApi } from '../api/adminApi'
 import { useToast } from '../../context/ToastContext'
 import { useQueryClient } from '@tanstack/react-query'
-import { Save, Loader2 } from 'lucide-react'
+import ICON_MAP from '../utils/iconMap'
+
+const { Save, Loader2 } = ICON_MAP
 
 export default function SettingsPage() {
     const { data: settings, isLoading } = useSettings()

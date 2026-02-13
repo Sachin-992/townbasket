@@ -17,6 +17,22 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ──────────────────────────────────
+# Sentry Error Tracking
+# ──────────────────────────────────
+SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=float(os.environ.get('SENTRY_TRACES_RATE', '0.1')),
+        send_default_pii=False,  # GDPR safe
+        environment=os.environ.get('SENTRY_ENVIRONMENT', 'production'),
+        release=os.environ.get('APP_VERSION', '1.0.0'),
+    )
+
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / '.env')
 
@@ -147,6 +163,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Supabase auth middleware - attaches user to request
     'townbasket_backend.middleware.SupabaseAuthMiddleware',
+    # Security headers middleware - CSP, Permissions-Policy, etc.
+    'townbasket_backend.middleware.SecurityHeadersMiddleware',
+    # Tighter CSP for admin routes (must be AFTER SecurityHeadersMiddleware)
+    'core.admin_security.AdminCSPMiddleware',
 ]
 
 # CORS settings - SECURITY: Strict configuration
@@ -174,7 +194,7 @@ ROOT_URLCONF = 'townbasket_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -203,16 +223,40 @@ if DEBUG and not DATABASE_URL:
         }
     }
 else:
-    # Production: Supabase PostgreSQL (must be configured via DATABASE_URL)
+    # Production: Supabase PostgreSQL with connection pooling
     if not DATABASE_URL:
         raise ValueError("DATABASE_URL environment variable is not set for production.")
     import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-        )
-    }
+
+    USE_PGBOUNCER = os.environ.get('USE_PGBOUNCER', 'false').lower() == 'true'
+
+    if USE_PGBOUNCER:
+        # PgBouncer manages the connection pool
+        DATABASES = {
+            'default': {
+                **dj_database_url.config(default=DATABASE_URL),
+                'CONN_MAX_AGE': 0,                   # PgBouncer manages pool
+                'CONN_HEALTH_CHECKS': False,
+                'DISABLE_SERVER_SIDE_CURSORS': True,  # Required for transaction mode
+                'OPTIONS': {
+                    'connect_timeout': 5,
+                    'options': '-c statement_timeout=30000',
+                },
+            }
+        }
+    else:
+        # Direct PostgreSQL — Django-managed persistent connections
+        DATABASES = {
+            'default': {
+                **dj_database_url.config(default=DATABASE_URL),
+                'CONN_MAX_AGE': 600,
+                'CONN_HEALTH_CHECKS': True,
+                'OPTIONS': {
+                    'connect_timeout': 10,
+                    'options': '-c statement_timeout=30000',
+                },
+            }
+        }
 
 
 # Password validation
@@ -263,6 +307,42 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# ──────────────────────────────────
+# Email Configuration
+# ──────────────────────────────────
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Gmail App Password
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'TownBasket <noreply@townbasket.in>')
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
+
+# Use console backend in development if no SMTP configured
+if DEBUG and not EMAIL_HOST_USER:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# ──────────────────────────────────
+# Celery Configuration
+# ──────────────────────────────────
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 120  # 2 minutes max per task
+CELERY_BEAT_SCHEDULE = {
+    'refresh-admin-metrics': {
+        'task': 'core.tasks.refresh_admin_metrics',
+        'schedule': 300,  # every 5 minutes
+    },
+}
+
+
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
@@ -272,6 +352,20 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ],
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    # Rate Limiting
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '1000/day',
+        'anon': '100/day',
+        'orders': '30/hour',
+        'auth': '20/hour',
+    },
+    # Global Pagination
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
 }
 
 # Logging - Structured for production
@@ -312,6 +406,51 @@ LOGGING = {
     },
 }
 
+# ──────────────────────────────────
+# Caching
+# ──────────────────────────────────
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
+
+if DEBUG and not os.environ.get('REDIS_URL'):
+    # Development: in-process cache (fine for single-worker runserver)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'townbasket-cache',
+            'TIMEOUT': 300,
+        }
+    }
+else:
+    # Production: Redis — shared across all Gunicorn workers
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'TIMEOUT': 300,  # 5 min default TTL
+            'KEY_PREFIX': 'tb_prod' if not DEBUG else 'tb_dev',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 50,
+                    'retry_on_timeout': True,
+                },
+                'SOCKET_CONNECT_TIMEOUT': 5,
+                'SOCKET_TIMEOUT': 5,
+                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                'IGNORE_EXCEPTIONS': True,  # Fail open if Redis is down
+            },
+        }
+    }
+    # Use Redis for sessions too (shared across workers)
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
+
+# File Upload Limits
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 MB
+ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
+
 # Security Headers (for production)
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
@@ -320,7 +459,20 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    # Uncomment below when using HTTPS
-    # SECURE_SSL_REDIRECT = True
-    # SESSION_COOKIE_SECURE = True
-    # CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Content Security Policy (applied via SecurityHeadersMiddleware)
+SUPABASE_STORAGE_HOST = SUPABASE_URL.replace('https://', '').split('/')[0] if SUPABASE_URL else ''
+CSP_POLICY = (
+    "default-src 'self'; "
+    f"img-src 'self' data: blob: https://{SUPABASE_STORAGE_HOST} https://assets.mixkit.co; "
+    "script-src 'self'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "connect-src 'self' https://*.supabase.co; "
+    "object-src 'none'; "
+    "frame-ancestors 'none';"
+)

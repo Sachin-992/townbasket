@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { usersApi, ordersApi } from '../../lib/api'
+import { useToast } from '../../context/ToastContext'
 
 export default function RiderAssignmentModal({ order, isOpen, onClose, onAssigned }) {
     const [riders, setRiders] = useState([])
     const [loading, setLoading] = useState(true)
     const [assigning, setAssigning] = useState(false)
+    const toast = useToast()
 
     useEffect(() => {
         if (isOpen) {
@@ -32,7 +34,7 @@ export default function RiderAssignmentModal({ order, isOpen, onClose, onAssigne
             onAssigned()
             onClose()
         } catch (err) {
-            alert(err.message || 'Failed to assign rider')
+            toast.error(err.message || 'Failed to assign rider')
         } finally {
             setAssigning(false)
         }

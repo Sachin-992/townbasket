@@ -15,7 +15,7 @@ function SkeletonLoader({ className = '', variant = 'rect' }) {
 /** Pre-built skeleton groups */
 export function MetricCardSkeleton() {
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 min-h-[128px]">
             <div className="flex items-center justify-between mb-4">
                 <SkeletonLoader className="h-4 w-24" />
                 <SkeletonLoader className="h-10 w-10" variant="circle" />
@@ -28,17 +28,17 @@ export function MetricCardSkeleton() {
 
 export function TableSkeleton({ rows = 5 }) {
     return (
-        <div className="space-y-3">
+        <div className="space-y-3 min-h-[340px]">
             <SkeletonLoader className="h-10 w-full" />
             {Array.from({ length: rows }).map((_, i) => (
-                <SkeletonLoader key={i} className="h-14 w-full" />
+                <SkeletonLoader key={i} className="h-14 w-full min-h-[56px]" />
             ))}
         </div>
     )
 }
 
 export function ChartSkeleton() {
-    return <SkeletonLoader variant="chart" className="w-full" />
+    return <SkeletonLoader variant="chart" className="w-full min-h-[256px]" />
 }
 
 export default memo(SkeletonLoader)

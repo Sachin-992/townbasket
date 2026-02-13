@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { productsApi } from '../../lib/api'
+import { useConfirm } from '../../context/ConfirmContext'
 
 export default function ProductList({ shop, onAddProduct, onEditProduct }) {
     const [products, setProducts] = useState([])
@@ -21,8 +22,10 @@ export default function ProductList({ shop, onAddProduct, onEditProduct }) {
         loadProducts()
     }
 
+    const confirm = useConfirm()
+
     const handleDelete = async (productId) => {
-        if (window.confirm('Are you sure you want to delete this product?')) {
+        if (await confirm('Are you sure you want to delete this product?')) {
             await productsApi.deleteProduct(productId)
             loadProducts()
         }

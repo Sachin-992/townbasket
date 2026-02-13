@@ -54,7 +54,7 @@ export default function BottomNav() {
     ]
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-pb">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-pb" aria-label="Main navigation">
             <div className="max-w-lg mx-auto flex justify-around items-center h-14 sm:h-16">
                 {navItems.map((item) => (
                     <NavLink

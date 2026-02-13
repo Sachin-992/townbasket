@@ -77,6 +77,11 @@ class Shop(models.Model):
     class Meta:
         db_table = 'shops'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'is_active']),
+            models.Index(fields=['town', 'status']),
+            models.Index(fields=['owner_supabase_uid']),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.town})"

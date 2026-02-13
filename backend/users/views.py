@@ -136,16 +136,29 @@ def update_role(request):
 @require_role('admin')
 def list_users_by_role(request):
     """
-    List users by role. Admin only.
+    List users by role. Admin only. Paginated (max 100).
     """
     role = request.query_params.get('role')
+    page = max(int(request.query_params.get('page', 1)), 1)
+    page_size = min(int(request.query_params.get('page_size', 20)), 100)
+
     if role:
         users = User.objects.filter(role=role)
     else:
         users = User.objects.all()
-        
-    serializer = UserPublicSerializer(users, many=True)
-    return Response(serializer.data)
+
+    total = users.count()
+    start = (page - 1) * page_size
+    page_users = users.order_by('-created_at')[start:start + page_size]
+
+    serializer = UserPublicSerializer(page_users, many=True)
+    return Response({
+        'results': serializer.data,
+        'count': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': (total + page_size - 1) // page_size,
+    })
 
 
 @api_view(['PATCH'])

@@ -56,7 +56,7 @@ function HealthBadge({ health, connected }) {
     )
 }
 
-export default function AdminTopbar({ onMenuClick, onOpenPalette, sse }) {
+export default function AdminTopbar({ onToggleSidebar, onOpenPalette, sse }) {
     const { pathname } = useLocation()
 
     // Build breadcrumb from current path
@@ -83,8 +83,8 @@ export default function AdminTopbar({ onMenuClick, onOpenPalette, sse }) {
             {/* Left: Mobile title / Desktop breadcrumb */}
             <div className="flex items-center gap-3">
                 <button
-                    onClick={onMenuClick}
-                    aria-label="Open sidebar menu"
+                    onClick={onToggleSidebar}
+                    aria-label="Toggle sidebar"
                     className="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
                 >
                     <Menu size={20} />

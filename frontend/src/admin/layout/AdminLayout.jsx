@@ -14,18 +14,16 @@ const queryClient = new QueryClient({
         queries: {
             retry: 1,
             refetchOnWindowFocus: false,
-            staleTime: 30_000,       // 30s — reduces redundant fetches on tab switch
-            gcTime: 10 * 60 * 1000,  // 10 min garbage collection window
+            staleTime: 30_000,
+            gcTime: 10 * 60 * 1000,
         },
     },
 })
 
 function AdminLayoutInner() {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [paletteOpen, setPaletteOpen] = useState(false)
 
-    // ── Real-time SSE connection ────────────────
     const sse = useAdminSSE()
 
     const shortcuts = useMemo(() => ({
@@ -37,38 +35,32 @@ function AdminLayoutInner() {
 
     return (
         <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden text-gray-900 dark:text-white transition-colors duration-200">
-            {/* Mobile overlay */}
-            {mobileMenuOpen && (
-                <div
-                    className="fixed inset-0 bg-black/40 z-30 md:hidden"
-                    onClick={() => setMobileMenuOpen(false)}
-                />
-            )}
-
-            {/* Sidebar */}
-            <div className={`
-          fixed inset-y-0 left-0 z-40 transition-transform duration-300 md:translate-x-0 md:static
-          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}>
+            {/* Desktop sidebar — completely hidden below md */}
+            <aside className={`
+                hidden md:flex md:flex-col md:shrink-0
+                bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
+                transition-all duration-300 ease-in-out h-screen sticky top-0
+                ${sidebarCollapsed ? 'md:w-[72px]' : 'md:w-64'}
+            `}>
                 <AdminSidebar
                     collapsed={sidebarCollapsed}
                     onToggleCollapse={() => setSidebarCollapsed(c => !c)}
                 />
-            </div>
+            </aside>
 
-            {/* Main content */}
-            <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
+            {/* Main content — full width on mobile, flex-1 on desktop */}
+            <div className="flex-1 flex flex-col min-w-0 w-full">
                 <AdminTopbar
-                    onMenuClick={() => setMobileMenuOpen(true)}
+                    onToggleSidebar={() => setSidebarCollapsed(c => !c)}
                     onOpenPalette={() => setPaletteOpen(true)}
                     sse={sse}
                 />
 
-                <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+                <main className="flex-1 overflow-y-auto pb-[76px] md:pb-0">
                     <Outlet context={{ sse }} />
                 </main>
 
-                {/* Mobile bottom tab navigation */}
+                {/* Mobile bottom tab navigation — hidden on desktop */}
                 <BottomTabNav />
             </div>
 

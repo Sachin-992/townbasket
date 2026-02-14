@@ -70,17 +70,32 @@ export default function AdminTopbar({ onMenuClick, onOpenPalette, sse }) {
         return items
     })()
 
+    // Current page title for mobile
+    const pageTitle = (() => {
+        const navItem = ADMIN_NAV.find(n => pathname.startsWith(n.path) && !n.exact)
+        if (navItem) return navItem.label
+        if (pathname === '/admin') return 'Overview'
+        return 'Admin'
+    })()
+
     return (
-        <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
-            {/* Left: Mobile menu + Breadcrumb */}
+        <header className="h-14 md:h-16 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-b border-gray-200/80 dark:border-gray-800 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
+            {/* Left: Mobile title / Desktop breadcrumb */}
             <div className="flex items-center gap-3">
                 <button
                     onClick={onMenuClick}
-                    className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
+                    aria-label="Open sidebar menu"
+                    className="hidden md:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
                 >
                     <Menu size={20} />
                 </button>
 
+                {/* Mobile: page title */}
+                <h1 className="md:hidden text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                    {pageTitle}
+                </h1>
+
+                {/* Desktop: breadcrumb */}
                 <nav className="hidden md:flex items-center gap-2 text-sm">
                     {crumbs.map((crumb, i) => (
                         <span key={crumb.path} className="flex items-center gap-2">
@@ -94,8 +109,17 @@ export default function AdminTopbar({ onMenuClick, onOpenPalette, sse }) {
             </div>
 
             {/* Right: Search, Health Badge, Alert Center */}
-            <div className="flex items-center gap-2">
-                {/* Command palette trigger */}
+            <div className="flex items-center gap-1.5 md:gap-2">
+                {/* Mobile: search icon */}
+                <button
+                    onClick={onOpenPalette}
+                    aria-label="Search"
+                    className="md:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors tap-animate"
+                >
+                    <Search size={20} />
+                </button>
+
+                {/* Desktop: full command palette trigger */}
                 <button
                     onClick={onOpenPalette}
                     className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

@@ -83,7 +83,7 @@ function MetricCard({
         : 'text-indigo-600 dark:text-indigo-400'
 
     return (
-        <div className="group bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-200 flex flex-col justify-between">
+        <div className="group bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-5 border border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-200 flex flex-col justify-between tap-animate">
             {/* Header row */}
             <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>

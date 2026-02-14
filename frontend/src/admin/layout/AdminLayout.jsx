@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AdminSidebar from './AdminSidebar'
 import AdminTopbar from './AdminTopbar'
 import CommandPalette from './CommandPalette'
+import BottomTabNav from './BottomTabNav'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useAdminSSE } from '../hooks/useAdminSSE'
 import { PermissionProvider } from '../hooks/usePermissions'
@@ -63,9 +64,12 @@ function AdminLayoutInner() {
                     sse={sse}
                 />
 
-                <main className="flex-1 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
                     <Outlet context={{ sse }} />
                 </main>
+
+                {/* Mobile bottom tab navigation */}
+                <BottomTabNav />
             </div>
 
             {/* Command Palette */}

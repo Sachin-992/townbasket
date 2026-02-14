@@ -3,8 +3,9 @@ import { Link, useLocation } from 'react-router-dom'
 import { getIcon } from '../utils/iconMap'
 import ICON_MAP from '../utils/iconMap'
 import { ADMIN_NAV } from '../utils/permissions'
+import { useAuth } from '../../context/AuthContext'
 
-const { X, ChevronRight } = ICON_MAP
+const { X, ChevronRight, LogOut } = ICON_MAP
 
 // Primary tabs shown in bottom bar (max 5 including "More")
 const PRIMARY_TABS = [
@@ -21,6 +22,7 @@ const MORE_ITEMS = ADMIN_NAV.filter(
 
 function BottomTabNav() {
     const { pathname } = useLocation()
+    const { signOut } = useAuth()
     const [moreOpen, setMoreOpen] = useState(false)
 
     const isActive = useCallback((path, exact) =>
@@ -169,6 +171,19 @@ function BottomTabNav() {
                                     </Link>
                                 )
                             })}
+
+                            {/* Logout */}
+                            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                <button
+                                    onClick={async () => { setMoreOpen(false); await signOut(); window.location.href = '/login' }}
+                                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl w-full text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all duration-150 tap-animate"
+                                >
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-rose-50 dark:bg-rose-900/30 text-rose-500">
+                                        <LogOut size={20} />
+                                    </div>
+                                    <span className="text-sm font-medium flex-1 text-left">Logout</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

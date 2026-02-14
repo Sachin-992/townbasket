@@ -156,16 +156,10 @@ def require_role(*allowed_roles):
     Decorator to require specific role(s).
     Must be used after @require_auth.
     
-    Usage:
-        @require_auth
-        @require_role('admin')
-        def admin_view(request):
-            ...
-        
-        @require_auth
-        @require_role('seller', 'admin')
-        def seller_or_admin_view(request):
-            ...
+    Checks three sources in order:
+    1. JWT 'role' claim
+    2. user_metadata.app_role from JWT
+    3. Django User model 'role' field (DB fallback)
     """
     def decorator(view_func):
         @wraps(view_func)
@@ -181,21 +175,31 @@ def require_role(*allowed_roles):
             user_metadata = request.supabase_user.get('user_metadata', {})
             app_role = user_metadata.get('app_role', 'customer')
             
-            # Check if user has any of the required roles
-            if jwt_role not in allowed_roles and app_role not in allowed_roles:
-                logger.warning(
-                    f"Access denied for user {request.supabase_user.get('user_id')}: "
-                    f"requires {allowed_roles}, has jwt_role={jwt_role}, app_role={app_role}"
-                )
-                return JsonResponse(
-                    {'error': 'Insufficient permissions'},
-                    status=403
-                )
+            # Check if user has any of the required roles via JWT
+            if jwt_role in allowed_roles or app_role in allowed_roles:
+                return view_func(request, *args, **kwargs)
             
-            return view_func(request, *args, **kwargs)
+            # Fallback: check DB user role
+            try:
+                from users.models import User
+                db_user = User.objects.get(supabase_uid=request.supabase_user.get('user_id'))
+                if db_user.role in allowed_roles:
+                    return view_func(request, *args, **kwargs)
+            except Exception:
+                pass
+            
+            logger.warning(
+                f"Access denied for user {request.supabase_user.get('user_id')}: "
+                f"requires {allowed_roles}, has jwt_role={jwt_role}, app_role={app_role}"
+            )
+            return JsonResponse(
+                {'error': 'Insufficient permissions'},
+                status=403
+            )
         
         return wrapper
     return decorator
+
 
 
 def require_owner(owner_field='owner_supabase_uid'):

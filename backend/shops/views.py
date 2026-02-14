@@ -206,56 +206,30 @@ def toggle_shop_open(request, shop_id):
 
 # Admin APIs - require admin role
 @api_view(['GET'])
+@require_auth
+@require_role('admin')
 def pending_shops(request):
     """
     Get all pending shop registrations. Admin only.
     """
-    if not hasattr(request, 'supabase_user') or not request.supabase_user:
-        return Response(
-            {'error': 'Authentication required'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-    
-    # Check for admin role
-    user_metadata = request.supabase_user.get('user_metadata', {})
-    app_role = user_metadata.get('app_role', 'customer')
-    
-    if app_role != 'admin':
-        return Response(
-            {'error': 'Admin access required'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
     shops = Shop.objects.filter(status='pending')
     serializer = ShopSerializer(shops, many=True)
     return Response(serializer.data)
 
 
+
 @api_view(['GET'])
+@require_auth
+@require_role('admin')
 def all_shops(request):
     """
     Get all shops. Admin only.
     """
-    if not hasattr(request, 'supabase_user') or not request.supabase_user:
-        return Response(
-            {'error': 'Authentication required'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-    
-    user_metadata = request.supabase_user.get('user_metadata', {})
-    app_role = user_metadata.get('app_role', 'customer')
-    
-    if app_role != 'admin':
-        return Response(
-            {'error': 'Admin access required'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
     shops = Shop.objects.all().select_related('category')
     
     # Pagination
     page = max(int(request.query_params.get('page', 1)), 1)
-    page_size = min(int(request.query_params.get('page_size', 20)), 100)
+    page_size = min(int(request.query_params.get('page_size', 20)), 500)
     total = shops.count()
     start = (page - 1) * page_size
     page_shops = shops.order_by('-id')[start:start + page_size]
@@ -271,25 +245,12 @@ def all_shops(request):
 
 
 @api_view(['PATCH'])
+@require_auth
+@require_role('admin')
 def approve_shop(request, shop_id):
     """
     Approve a shop registration. Admin only.
     """
-    if not hasattr(request, 'supabase_user') or not request.supabase_user:
-        return Response(
-            {'error': 'Authentication required'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-    
-    user_metadata = request.supabase_user.get('user_metadata', {})
-    app_role = user_metadata.get('app_role', 'customer')
-    
-    if app_role != 'admin':
-        return Response(
-            {'error': 'Admin access required'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
     try:
         shop = Shop.objects.get(id=shop_id)
     except Shop.DoesNotExist:
@@ -303,25 +264,12 @@ def approve_shop(request, shop_id):
 
 
 @api_view(['PATCH'])
+@require_auth
+@require_role('admin')
 def reject_shop(request, shop_id):
     """
     Reject a shop registration. Admin only.
     """
-    if not hasattr(request, 'supabase_user') or not request.supabase_user:
-        return Response(
-            {'error': 'Authentication required'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-    
-    user_metadata = request.supabase_user.get('user_metadata', {})
-    app_role = user_metadata.get('app_role', 'customer')
-    
-    if app_role != 'admin':
-        return Response(
-            {'error': 'Admin access required'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
     try:
         shop = Shop.objects.get(id=shop_id)
     except Shop.DoesNotExist:
@@ -335,25 +283,12 @@ def reject_shop(request, shop_id):
 
 
 @api_view(['PATCH'])
+@require_auth
+@require_role('admin')
 def toggle_shop_active(request, shop_id):
     """
     Toggle shop active/inactive status. Admin only.
     """
-    if not hasattr(request, 'supabase_user') or not request.supabase_user:
-        return Response(
-            {'error': 'Authentication required'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-    
-    user_metadata = request.supabase_user.get('user_metadata', {})
-    app_role = user_metadata.get('app_role', 'customer')
-    
-    if app_role != 'admin':
-        return Response(
-            {'error': 'Admin access required'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
     try:
         shop = Shop.objects.get(id=shop_id)
     except Shop.DoesNotExist:
@@ -367,6 +302,7 @@ def toggle_shop_active(request, shop_id):
         'message': 'Shop activated' if shop.is_active else 'Shop disabled',
         'shop': ShopSerializer(shop).data
     })
+
 
 
 @api_view(['GET'])

@@ -67,7 +67,7 @@ export const systemApi = {
 
 // ── Shops (admin) ───────────────────────────────
 export const adminShopsApi = {
-    getAll: () => adminFetch('/shops/all/'),
+    getAll: () => adminFetch('/shops/all/?page_size=500').then(r => r.results || r),
     getPending: () => adminFetch('/shops/pending/'),
     approve: (id) => adminFetch(`/shops/${id}/approve/`, { method: 'PATCH' }),
     reject: (id) => adminFetch(`/shops/${id}/reject/`, { method: 'PATCH' }),
@@ -93,7 +93,7 @@ export const adminUsersApi = {
 // ── Complaints (admin) ──────────────────────────
 export const adminComplaintsApi = {
     getAll: (status = 'pending') =>
-        adminFetch(`/complaints/list/?status=${status}`),
+        adminFetch(`/complaints/list/?status=${status}&page_size=500`).then(r => r.results || r),
     resolve: (id, data) =>
         adminFetch(`/complaints/${id}/resolve/`, {
             method: 'PATCH',
